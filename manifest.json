@@ -1,26 +1,18 @@
 {
   "name": "lisle · 小窝",
   "short_name": "lisle",
-  "description": "江漓的私人小窝",
-  "lang": "zh-CN",
+  "description": "江漓的小窝",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fdfbf7",
-  "theme_color": "#f4aab6",
+  "theme_color": "#fdf1f3",
+  "background_color": "#fdf1f3",
+  "lang": "zh-CN",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any maskable"}
   ]
 }
