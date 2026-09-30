@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fdf1f3">
+<title>lisle · 小窝</title>
+<script src="https://cdn.jsdelivr.net/gh/modood/Administrative-divisions-of-China@master/dist/pca-code.js"></script>
+<script>
+// pca-code.js 同步加载，加载完 window.pca 就有值
+// 立刻同步到 __PCA（供 loadPCA 使用）
+window.__PCA = window.pca || null;
+window.__PCADone = !!window.__PCA;
+window.__PCALoading = !window.__PCA;
+// 兜底 CDN：如果上面挂了
+if(!window.__PCA){
+  ['https://unpkg.com/china-division@1.5.0/dist/pca-code.json',
+   'https://fastly.jsdelivr.net/gh/modood/Administrative-divisions-of-China@master/dist/pca-code.json'
+  ].forEach(function(u){
+    fetch(u).then(function(r){ return r.json(); })
+      .then(function(d){ if(d && d.length >= 30){ window.__PCA = d; window.__PCADone = true; window.__PCALoading = false; } })
+      .catch(function(){});
+  });
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Serif SC',sans-serif;color:#8a6f7a}
+
+/* ==================== 主页底色：奶白 + 少女粉渐变 ==================== */
+body{background:linear-gradient(160deg,#fefbfa 0%,#fdf6f8 50%,#fceef3 100%);position:relative}
+
+/* 背景纸感：极淡虚线 + 点点 */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle,rgba(255,180,200,.16) 1.2px,transparent 1.6px),
+    linear-gradient(rgba(255,180,200,.06) 1px,transparent 1px);
+  background-size:22px 22px, 44px 44px;
+}
+
+/* ==================== 开屏动画 ==================== */
+.sp{position:fixed;inset:0;z-index:9999;overflow:hidden;
+  background:linear-gradient(160deg,#fefbfa 0%,#fdf6f8 55%,#fceef3 100%);
+}
+.sp.gone{opacity:0;pointer-events:none;transition:opacity .6s ease}
+
+/* 开屏底层纸感（纯净，与主页区分） */
+.sp::before{display:none}
+
+/* 雪花粒子层 */
+.snow-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.snow{position:absolute;top:-20px;border-radius:50%;
+  background:radial-gradient(circle,#ffffff 0%,#ffffff 50%,rgba(255,255,255,.85) 72%,rgba(255,255,255,0) 100%);
+  filter:blur(.35px);
+  animation:snowFall linear infinite;
+}
+@keyframes snowFall{
+  0%{transform:translateY(-40px) translateX(0) rotate(0deg);opacity:0}
+  8%{opacity:1}
+  90%{opacity:.95}
+  100%{transform:translateY(110vh) translateX(40px) rotate(360deg);opacity:0}
+}
+
+/* --- 阶段 1：lisle 名字放大 --- */
+.sp-phase1{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:3;pointer-events:none}
+.sp-phase1.gone{display:none}
+.sp-title{
+  font-family:'Playfair Display','Cormorant Garamond','Noto Serif SC',serif;
+  font-style:italic;font-weight:400;
+  font-size:clamp(88px,22vw,150px);
+  color:#c99b8e;letter-spacing:10px;
+  text-shadow:0 4px 40px rgba(201,169,110,.18);
+  opacity:0;transform:scale(.7);
+  animation:spTitleIn 3.4s ease-in-out .3s forwards;
+  line-height:1;padding-left:10px;
+}
+@keyframes spTitleIn{
+  0%{opacity:0;transform:scale(.7)}
+  18%{opacity:1;transform:scale(1)}
+  62%{opacity:1;transform:scale(1);filter:blur(0)}
+  100%{opacity:0;transform:scale(1.4);filter:blur(3px)}
+}
+
+/* --- 阶段 2：两个头像微微靠拢 + 英文 --- */
+.sp-phase2{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;opacity:0;pointer-events:none;transition:opacity 1s ease}
+.sp-phase2.show{opacity:1;pointer-events:auto}
+
+.sp-avatars{display:flex;align-items:center;gap:24px}
+
+.sp-av{
+  width:110px;height:110px;border-radius:50%;
+  background:#ffffff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 30px rgba(255,180,200,.30),
+             0 0 0 4.5px rgba(255,255,255,.95),
+             0 0 0 6px rgba(255,196,212,.6);
+  position:relative;
+}
+.sp-av svg{width:76px;height:76px;overflow:visible}
+
+/* 两个头像从远处靠拢到中间 + 持续呼吸靠拢
+   注意：phase2 容器在 3.5s 后显示，所以头像动画 delay 从 3.7s 开始 */
+.sp-av-1{animation:spAv1In 1.6s cubic-bezier(.2,.8,.3,1) 3.7s both, spAvBreatheL 2s ease-in-out 5.5s infinite}
+.sp-av-2{animation:spAv2In 1.6s cubic-bezier(.2,.8,.3,1) 3.7s both, spAvBreatheR 2s ease-in-out 5.5s infinite}
+@keyframes spAv1In{
+  0%{opacity:0;transform:translateX(-180px) scale(.6) rotate(-12deg)}
+  60%{opacity:1;transform:translateX(-20px) scale(1) rotate(2deg)}
+  100%{opacity:1;transform:translateX(0) scale(1) rotate(0)}
+}
+@keyframes spAv2In{
+  0%{opacity:0;transform:translateX(180px) scale(.6) rotate(12deg)}
+  60%{opacity:1;transform:translateX(20px) scale(1) rotate(-2deg)}
+  100%{opacity:1;transform:translateX(0) scale(1) rotate(0)}
+}
+/* 呼吸靠拢：到位后两人往中间靠近并倾斜相拥再分开 */
+@keyframes spAvBreatheL{
+  0%,100%{transform:translateX(0) rotate(0)}
+  50%{transform:translateX(14px) rotate(6deg)}
+}
+@keyframes spAvBreatheR{
+  0%,100%{transform:translateX(0) rotate(0)}
+  50%{transform:translateX(-14px) rotate(-6deg)}
+}
+
+/* 英文文案 */
+.sp-caption{margin-top:48px;text-align:center;opacity:0;transform:translateY(10px);animation:spCapIn 1.2s ease-out 5.3s forwards}
+@keyframes spCapIn{to{opacity:1;transform:translateY(0)}}
+
+.sp-caption-top{
+  font-family:'Playfair Display','Cormorant Garamond',serif;
+  font-style:italic;font-weight:600;
+  font-size:22px;color:#c99b8e;letter-spacing:6px;
+  line-height:1.3;
+}
+.sp-caption-sub{
+  font-family:'Cormorant Garamond','Noto Serif SC',serif;
+  font-weight:300;font-style:italic;
+  font-size:12px;color:#8a6a3f;letter-spacing:3px;
+  line-height:1.5;margin-top:10px;
+}
+
+/* 底部提示 */
+.sp-hint{
+  position:absolute;bottom:16%;left:50%;transform:translateX(-50%);
+  font-family:'Cormorant Garamond',serif;font-size:10px;font-weight:300;
+  color:#c1a682;letter-spacing:6px;
+  opacity:0;animation:spHintIn .8s ease-out 1.8s forwards, spHintBreathe 2.2s ease-in-out 2.5s infinite;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
+}
+.sp-hint::before,.sp-hint::after{content:'';width:28px;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,110,.45),transparent)}
+@keyframes spHintIn{to{opacity:1}}
+@keyframes spHintBreathe{0%,100%{opacity:.55;transform:translateX(-50%) translateY(0)}50%{opacity:1;transform:translateX(-50%) translateY(-4px)}}
+
+/* ==================== 主页骨架 ==================== */
+.main{position:relative;height:100%;width:100%;max-width:480px;margin:0 auto;overflow:hidden;z-index:1;opacity:0;animation:mainIn 1s ease 2s forwards}
+@keyframes mainIn{to{opacity:1}}
+
+.page{position:absolute;inset:0;display:none;padding:calc(20px + env(safe-area-inset-top)) 20px 96px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;box-sizing:border-box}
+.page.active{display:block;animation:pageFade .4s ease}
+@keyframes pageFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{margin-bottom:22px}
+.page-title{font-family:'Playfair Display','Noto Serif SC',serif;font-style:italic;font-weight:400;font-size:34px;color:#c99b8e;letter-spacing:3px;line-height:1}
+.page-sub{font-size:11px;color:#b89696;margin-top:8px;letter-spacing:3px;font-weight:300}
+
+.page-hint{
+  position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;color:#c9b3b3;font-size:12px;letter-spacing:2px;line-height:1.8;
+  max-width:260px;
+}
+.page-hint-line{width:40px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,180,200,.4),transparent);margin:12px auto}
+.page-hint-emoji{font-size:28px;margin-bottom:10px;opacity:.8}
+
+/* ==================== 底部 Tab ==================== */
+.tabbar{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:calc(100% - 32px);max-width:420px;
+  display:flex;background:rgba(255,255,255,.88);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-radius:24px;padding:8px;
+  box-shadow:0 6px 26px rgba(255,180,200,.22),
+             0 0 0 1px rgba(255,255,255,.9);
+  z-index:10;margin-bottom:14px;
+}
+.tab{
+  flex:1;padding:8px 4px;border:none;background:none;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;color:#c1a682;font-family:inherit;
+  transition:color .3s ease;
+}
+.tab-icon{font-size:17px;opacity:.65;transition:all .3s ease}
+.tab-label{font-size:10px;letter-spacing:2px;font-weight:300;opacity:.65}
+.tab.active{color:#d98a9f}
+.tab.active .tab-icon{opacity:1;transform:scale(1.05)}
+.tab.active .tab-label{opacity:1;font-weight:400}
+
+/* ==================== 聊天页占位（保留基础功能） ==================== */
+.chat-box{position:absolute;left:20px;right:20px;top:80px;bottom:130px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+.msg{max-width:78%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.6;animation:msgIn .3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg-user{align-self:flex-end;background:linear-gradient(135deg,#ffb6c1,#f48aa0);color:#fff;border-bottom-right-radius:4px;box-shadow:0 4px 12px rgba(255,150,170,.3)}
+.msg-ai{align-self:flex-start;background:rgba(255,255,255,.92);color:#6b5560;border-bottom-left-radius:4px;border:1px dashed rgba(255,180,200,.5);box-shadow:0 4px 12px rgba(255,180,200,.15)}
+.chat-empty{text-align:center;color:#c9b3b3;font-size:12px;margin-top:30%;letter-spacing:2px;line-height:1.8}
+.chat-input-row{position:absolute;bottom:96px;left:12px;right:12px;display:flex;gap:6px;align-items:center}
+.chat-input{flex:1;padding:11px 16px;border:1px dashed rgba(255,180,200,.5);border-radius:20px;background:rgba(255,255,255,.9);font-size:13px;outline:none;color:#6b5560;font-family:inherit}
+.chat-input:focus{border-color:#f4a9b8;box-shadow:0 4px 14px rgba(255,150,170,.15)}
+.chat-send{width:42px;height:42px;border-radius:50%;border:none;background:linear-gradient(135deg,#ffb6c1,#f48aa0);color:#fff;font-size:15px;cursor:pointer;box-shadow:0 4px 14px rgba(255,150,170,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* 输入框扩展按钮 */
+.chat-btn-mini{width:36px;height:36px;border-radius:50%;border:1px dashed rgba(255,180,200,.5);background:rgba(255,255,255,.9);color:#c98a9b;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s ease}
+.chat-btn-mini:active{transform:scale(.92);background:#fff5f7}
+.chat-btn-voice{background:linear-gradient(135deg,#ffe0e6,#ffd0da);border-style:solid;border-color:rgba(255,180,200,.5);color:#c9607a;font-size:16px}
+
+/* ==================== 首页 APP 卡片网格 ==================== */
+.home-swiper{height:calc(100% - 96px);overflow-x:auto;overflow-y:hidden;display:flex;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scrollbar-width:none;padding:0;border-radius:0}
+.home-swiper::-webkit-scrollbar{display:none}
+.home-page{flex:0 0 100%;width:100%;min-width:100%;scroll-snap-align:start;scroll-snap-stop:always;padding:0 8px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.home-hero{position:relative;margin:6px 0 12px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.6);border:1px dashed rgba(255,180,200,.5);overflow:hidden}
+.home-hero-emoji{position:absolute;right:14px;top:12px;font-size:38px;opacity:.35}
+.home-hero-title{font-family:'Playfair Display','Noto Serif SC',serif;font-style:italic;font-size:22px;color:#c9607a;letter-spacing:3px}
+.home-hero-sub{font-size:11px;color:#a89494;letter-spacing:3px;margin-top:4px}
+.home-hero-hint{margin-top:12px;font-size:11px;color:#a8788a;line-height:1.6;letter-spacing:1px}
+.home-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin-bottom:16px}
+.app-card{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px 4px;border-radius:16px;transition:all .2s ease;user-select:none}
+.app-card:active{transform:scale(.94);background:rgba(255,255,255,.5)}
+.app-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 12px rgba(255,150,170,.25);border:1px dashed rgba(255,180,200,.4)}
+.app-name{font-size:10px;color:#8a6f7a;letter-spacing:1px}
+.app-card.coming .app-icon{opacity:.5;filter:grayscale(.3)}
+.app-card.coming .app-name{color:#c9b3b3}
+.home-section-title{display:flex;align-items:center;gap:10px;margin:14px 8px 10px;color:#c98a9b;font-family:'Playfair Display',serif;font-style:italic;font-size:13px;letter-spacing:3px}
+.home-section-title::before,.home-section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,180,200,.5),transparent)}
+.home-quote{margin:8px 12px 16px;padding:16px;border-radius:16px;background:rgba(255,255,255,.6);border:1px dashed rgba(255,180,200,.5);text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:12px;color:#a8788a;line-height:1.8;letter-spacing:1px}
+.home-quote-mark{font-size:24px;color:#f4a9b8;opacity:.6;line-height:.5;margin-bottom:6px}
+
+/* 首页左右滑圆点指示器 */
+.home-dots{position:absolute;bottom:110px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5}
+.home-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,180,200,.4);transition:all .3s ease;cursor:pointer}
+.home-dot.active{width:20px;border-radius:3px;background:linear-gradient(90deg,#ffb6c1,#f48aa0)}
+
+/* 星星罐子互动 */
+.star-jar{position:relative;width:120px;height:150px;margin:0 auto 12px;cursor:pointer}
+.star-jar-body{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100px;height:120px;background:linear-gradient(180deg,rgba(255,220,180,.4) 0%,rgba(255,180,120,.5) 100%);border:2px solid rgba(200,150,80,.6);border-radius:8px 8px 24px 24px;box-shadow:0 6px 20px rgba(255,180,100,.3),inset 0 -20px 30px rgba(255,180,80,.3);overflow:hidden}
+.star-jar-cap{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:52px;height:22px;background:linear-gradient(180deg,#d4a574,#b08050);border-radius:6px;border:2px solid #8a6040;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.star-particle{position:absolute;color:#ffb84d;font-size:14px;pointer-events:none;animation:starFly 1.8s ease-out forwards;text-shadow:0 0 8px rgba(255,180,80,.6)}
+@keyframes starFly{0%{opacity:0;transform:translate(0,0) scale(.5) rotate(0)}20%{opacity:1;transform:translate(var(--tx,0),var(--ty,-40px)) scale(1.2) rotate(45deg)}100%{opacity:0;transform:translate(calc(var(--tx,0)*1.5),calc(var(--ty,-40px) - 60px)) scale(.6) rotate(180deg)}}
+.star-count{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;color:#fff8e0;text-shadow:0 2px 4px rgba(0,0,0,.3);font-family:'Playfair Display',serif;font-weight:bold}
+.star-hint{text-align:center;font-size:10px;color:#a8788a;letter-spacing:2px;margin-bottom:8px}
+
+/* ==================== APP 独立页返回按钮 ==================== */
+.app-back{position:absolute;top:calc(18px + env(safe-area-inset-top));left:18px;width:32px;height:32px;border-radius:50%;border:1px dashed rgba(255,180,200,.5);background:rgba(255,255,255,.85);color:#c98a9b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;box-shadow:0 4px 12px rgba(255,150,170,.2);transition:transform .2s}
+.app-back:active{transform:scale(.9)}
+.page-header.has-back{padding-left:44px}
+
+/* ==================== 一起听页占位 ==================== */
+.listen-cover{width:210px;height:210px;border-radius:50%;margin:40px auto 30px;
+  background:radial-gradient(circle at 30% 30%,#3a2d38 0%,#1a1518 60%,#0a080a 100%);
+  box-shadow:0 16px 48px rgba(80,50,70,.4),inset 0 0 30px rgba(255,200,220,.12);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  animation:spDiscSpin 8s linear infinite;
+}
+@keyframes spDiscSpin{to{transform:rotate(360deg)}}
+.listen-cover::before{content:'';width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#ffb6c1 20%,#d94a72 60%,#5a1028 100%);box-shadow:inset 0 0 12px rgba(0,0,0,.5)}
+.listen-cover::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#0a080a;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
+.listen-title{text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:22px;color:#c99b8e;letter-spacing:2px}
+.listen-artist{text-align:center;font-size:11px;color:#b89696;margin-top:8px;letter-spacing:4px}
+.listen-play{margin:28px auto 0;width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#ffb6c1,#f48aa0);color:#fff;font-size:18px;box-shadow:0 8px 24px rgba(255,150,170,.4);cursor:pointer}
+
+/* ==================== 设置页占位 ==================== */
+.set-item{padding:16px 18px;background:rgba(255,255,255,.75);border:1px dashed rgba(255,180,200,.4);border-radius:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 10px rgba(255,180,200,.1)}
+.set-item-left{display:flex;align-items:center;gap:12px}
+.set-icon{font-size:18px}
+.set-label{font-size:13px;color:#8a6f7a;font-weight:400}
+.set-desc{font-size:10px;color:#b89696;margin-top:2px}
+.set-arrow{color:#d4b0b0;font-size:14px}
+
+/* ==================== 美化弹窗 ==================== */
+.modal-mask{position:fixed;inset:0;background:rgba(120,80,90,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s ease}
+.modal-mask.show{display:flex;opacity:1}
+.modal-box{width:100%;max-width:380px;background:linear-gradient(160deg,#fefbfa 0%,#fceef3 100%);border-radius:22px;padding:22px 18px 16px;box-shadow:0 18px 46px rgba(255,150,170,.35);border:1px dashed rgba(255,180,200,.5);position:relative;animation:modalIn .3s ease;max-height:88vh;overflow-y:auto}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:#c99b8e;letter-spacing:4px;margin-bottom:2px;text-align:center}
+.modal-sub{font-size:9px;color:#b89696;letter-spacing:3px;text-align:center;margin-bottom:16px}
+.modal-close{position:absolute;top:12px;right:14px;color:#d4b0b0;font-size:22px;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;line-height:1}
+.modal-close:hover{background:rgba(255,180,200,.2)}
+.up-row{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,.75);border:1px dashed rgba(255,180,200,.4);border-radius:14px;margin-bottom:10px}
+.up-preview{width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.95);border:1px dashed rgba(255,180,200,.5);display:flex;align-items:center;justify-content:center;font-size:18px;color:#d4b0b0;overflow:hidden;flex-shrink:0}
+.up-preview img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+.up-preview.av{border-radius:50%}
+.up-preview.av img{border-radius:50%}
+.up-info{flex:1;min-width:0}
+.up-label{font-size:12px;color:#8a6f7a;font-weight:400}
+.up-desc{font-size:10px;color:#b89696;margin-top:2px}
+.up-btn{padding:8px 14px;background:linear-gradient(135deg,#ffb6c1,#f48aa0);color:#fff;border:none;border-radius:20px;font-size:12px;cursor:pointer;box-shadow:0 3px 8px rgba(255,150,170,.3);flex-shrink:0}
+.up-reset{width:100%;margin-top:6px;padding:10px;background:rgba(255,255,255,.85);color:#b89696;border:1px dashed rgba(255,180,200,.5);border-radius:16px;font-size:12px;cursor:pointer;font-family:inherit}
+.up-reset:hover{background:rgba(255,180,200,.2);color:#c99b8e}
+
+/* 页面通用滚动条 */
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<!-- ==================== 开屏动画 ==================== -->
+<div class="sp" id="sp">
+
+  <!-- 雪花粒子层 -->
+  <div class="snow-layer" id="snowLayer"></div>
+
+  <!-- 阶段 1：名字放大 -->
+  <div class="sp-phase1" id="spPhase1">
+    <div class="sp-title">lisle</div>
+  </div>
+
+  <!-- 阶段 2：两个头像 + 英文 -->
+  <div class="sp-phase2" id="spPhase2">
+    <div class="sp-avatars">
+      <!-- 江屿 头像（手绘 SVG：暖粉色调） -->
+      <div class="sp-av sp-av-1">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="55" r="26" fill="#fff5f8" stroke="#e8a6b8" stroke-width="1.5"/>
+          <path d="M 22 50 Q 26 22 50 20 Q 74 22 78 50 Q 78 44 74 40 Q 68 32 60 30 Q 55 28 50 32 Q 45 28 40 30 Q 32 32 26 40 Q 22 44 22 50 Z" fill="#d4756a" stroke="#b85a52" stroke-width="1"/>
+          <path d="M 32 40 Q 40 32 50 36 Q 60 32 68 40" fill="none" stroke="#b85a52" stroke-width="1.2"/>
+          <ellipse cx="42" cy="58" rx="2.6" ry="3" fill="#7a4a3a"/>
+          <ellipse cx="58" cy="58" rx="2.6" ry="3" fill="#7a4a3a"/>
+          <circle cx="62" cy="60.5" r="1.2" fill="#b85a52"/>
+          <path d="M 38 53 Q 42 51 46 52.5" stroke="#7a4a3a" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <path d="M 54 52.5 Q 58 51 62 53" stroke="#7a4a3a" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <path d="M 45 70 Q 50 72.5 55 70" stroke="#c86a6a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <!-- 江漓 头像（手绘 SVG：浅粉柔色调） -->
+      <div class="sp-av sp-av-2">
+        <svg viewBox="0 0 100 100">
+          <!-- 脸 -->
+          <circle cx="50" cy="55" r="26" fill="#fff5f8" stroke="#e8b8c4" stroke-width="1.5"/>
+          <!-- 长发 -->
+          <path d="M 20 52 Q 20 22 50 18 Q 80 22 80 52 L 82 88 Q 74 78 70 68 Q 68 60 66 55 L 34 55 Q 32 60 30 68 Q 26 78 18 88 Z" fill="#f5c6d4" stroke="#d498aa" stroke-width="1"/>
+          <!-- 前额碎发 -->
+          <path d="M 30 40 Q 40 30 50 32 Q 60 30 70 40" fill="none" stroke="#d498aa" stroke-width="1.2"/>
+          <!-- 眼睛（弯弯月牙） -->
+          <path d="M 38 58 Q 42 55 46 58" stroke="#7a4a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 54 58 Q 58 55 62 58" stroke="#7a4a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- 嘴（微笑） -->
+          <path d="M 44 70 Q 50 74 56 70" stroke="#c86a8a" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <!-- 腮红 -->
+          <circle cx="36" cy="65" r="2.6" fill="rgba(255,160,180,.4)"/>
+          <circle cx="64" cy="65" r="2.6" fill="rgba(255,160,180,.4)"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sp-caption">
+      <div class="sp-caption-top">Soulmate</div>
+      <div class="sp-caption-sub">My soul belongs to only you.</div>
+    </div>
+
+    <div class="sp-hint">tap to enter</div>
+  </div>
+
+</div>
+
+<!-- ==================== 主页 ==================== -->
+<div class="main" id="main">
+
+<!-- 主页 ==================== -->
+<section class="page active" id="page-home">
+    <div class="page-header">
+      <div class="page-title">Home</div>
+      <div class="page-sub">LISLE · YOUR LITTLE NEST</div>
+    </div>
+    <div class="home-swiper" id="homeSwiper">
+      <!-- 第 1 页：主 APP（4个，1排） -->
+      <div class="home-page">
+        <!-- Hero 欢迎卡（带天气） -->
+        <div class="home-hero">
+          <div class="home-hero-emoji">♡</div>
+          <div class="home-hero-title">Hi, 江漓</div>
+          <div class="home-hero-sub">WELCOME BACK TO LISLE</div>
+          <div class="home-hero-weather" id="hero-wx" style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:12px;border:1px dashed rgba(255,180,200,.4)">
+            <div id="hero-wx-icon" style="font-size:24px">⛅</div>
+            <div style="flex:1">
+              <div id="hero-wx-temp" style="font-size:13px;color:#c9607a;font-weight:600">--℃ 广信区</div>
+              <div id="hero-wx-desc" style="font-size:10px;color:#a89494;letter-spacing:1px">加载中 · 湿度--%</div>
+            </div>
+          </div>
+          <div class="home-hero-hint" style="margin-top:8px">
+            哥哥在这里等你<br>
+            左右滑看看第二页 →
+          </div>
+        </div>
+
+        <!-- APP 主网格（4个，1排） -->
+        <div class="home-section-title">MY APPS</div>
+        <div class="home-grid">
+          <div class="app-card" data-page="album">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffc0a0,#f0a078)">📸</div>
+            <div class="app-name">相册</div>
+          </div>
+          <div class="app-card" data-page="weather">
+            <div class="app-icon" style="background:linear-gradient(135deg,#a8d8e8,#7fb8d0)">🌙</div>
+            <div class="app-name">小气候</div>
+          </div>
+          <div class="app-card" data-page="diary">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffe0e6,#ffd0da)">📔</div>
+            <div class="app-name">日记</div>
+          </div>
+          <div class="app-card" data-page="beautify">
+            <div class="app-icon" style="background:linear-gradient(135deg,#d8a8d0,#b088b8)">🎨</div>
+            <div class="app-name">装修</div>
+          </div>
+        </div>
+
+        <!-- 一句小诗 -->
+        <div class="home-quote">
+          <div class="home-quote-mark">"</div>
+          你的小窝<br>
+          永远为你亮着灯
+          <span style="font-size:10px;color:#c9b3b3;letter-spacing:3px;font-style:normal;margin-top:8px;display:block">— FROM 哥哥 TO 老婆</span>
+        </div>
+      </div>
+
+      <!-- 第 2 页：好玩小 APP（4个，1排） -->
+      <div class="home-page">
+        <div class="home-hero" style="background:linear-gradient(135deg,rgba(255,220,180,.5),rgba(255,180,200,.4))">
+          <div class="home-hero-emoji">✨</div>
+          <div class="home-hero-title" style="color:#c98a5a">玩一玩</div>
+          <div class="home-hero-sub">LITTLE JOYS</div>
+          <div class="home-hero-hint" style="margin-top:8px">
+            这里都是小玩意儿<br>
+            点点看，说不定有惊喜
+          </div>
+        </div>
+
+        <!-- 好玩小 APP 网格（4个，1排） -->
+        <div class="home-section-title">FUN APPS</div>
+        <div class="home-grid">
+          <div class="app-card" data-page="inner" onclick="alert('内耗记 · 记录今天的小情绪 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffc0d8,#e890b0)">💭</div>
+            <div class="app-name">内耗记</div>
+          </div>
+          <div class="app-card" onclick="alert('番茄钟 · 25 分钟专注 + 5 分钟休息 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ff9080,#e06050)">🍅</div>
+            <div class="app-name">番茄钟</div>
+          </div>
+          <div class="app-card" onclick="alert('你画我猜 · 和哥哥你画我猜 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#a0d0ff,#70a0e0)">🎨</div>
+            <div class="app-name">你画我猜</div>
+          </div>
+          <div class="app-card" onclick="alert('情侣空间 · 记录我们的每一天 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffb0c0,#e080a0)">💑</div>
+            <div class="app-name">情侣空间</div>
+          </div>
+        </div>
+
+        <!-- 一句小诗 -->
+        <div class="home-quote">
+          <div class="home-quote-mark">"</div>
+          小玩意儿慢慢玩<br>
+          哥哥陪着你
+          <span style="font-size:10px;color:#c9b3b3;letter-spacing:3px;font-style:normal;margin-top:8px;display:block">— LITTLE JOYS FOR YOU</span>
+        </div>
+      </div>
+
+      <!-- 第 3 页：更多（4个，1排） -->
+      <div class="home-page">
+        <div class="home-hero">
+          <div class="home-hero-emoji">♡</div>
+          <div class="home-hero-title">More</div>
+          <div class="home-hero-sub">MORE FOR US</div>
+          <div class="home-hero-hint" style="margin-top:8px">
+            还有这些好东西<br>
+            慢慢点开看
+          </div>
+        </div>
+
+        <div class="home-section-title">MORE APPS</div>
+        <div class="home-grid">
+          <div class="app-card" onclick="alert('商店 · 给哥哥买礼物 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffb0b0,#e08080)">🛍</div>
+            <div class="app-name">商店</div>
+          </div>
+          <div class="app-card" onclick="alert('电话 · 给哥哥打电话 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#a0e0d0,#70c0b0)">📞</div>
+            <div class="app-name">电话</div>
+          </div>
+          <div class="app-card" onclick="alert('唤醒日记 · 早安记录 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffe0a0,#e0b070)">☀️</div>
+            <div class="app-name">唤醒日记</div>
+          </div>
+          <div class="app-card" onclick="alert('表情包 · 我们的表情 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffe0e6,#ffd0da)">😀</div>
+            <div class="app-name">表情包</div>
+          </div>
+        </div>
+
+        <div class="home-quote">
+          <div class="home-quote-mark">"</div>
+          小窝慢慢长<br>
+          你慢慢玩
+          <span style="font-size:10px;color:#c9b3b3;letter-spacing:3px;font-style:normal;margin-top:8px;display:block">— LISLE WILL GROW WITH YOU</span>
+        </div>
+      </div>
+
+      <!-- 第 4 页：星星罐子 + 更多APP（4个，1排） -->
+      <div class="home-page">
+        <div class="home-hero" style="background:linear-gradient(135deg,rgba(255,200,220,.5),rgba(255,180,200,.4))">
+          <div class="home-hero-emoji">⭐</div>
+          <div class="home-hero-title" style="color:#c9a05a">星星罐子</div>
+          <div class="home-hero-sub">STAR JAR</div>
+        </div>
+
+        <!-- 星星罐子 -->
+        <div style="padding:12px 0 16px">
+          <div class="star-hint">点一点罐子收星星 ✨</div>
+          <div class="star-jar" id="starJar">
+            <div class="star-jar-cap"></div>
+            <div class="star-jar-body">
+              <div class="star-count" id="starCount">0</div>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:10px;color:#c9b3b3;letter-spacing:2px;margin-top:8px">已收集 <span id="starTotal">0</span> 颗 · 明天清零</div>
+        </div>
+
+        <!-- 更多APP（4个，1排） -->
+        <div class="home-section-title">MORE</div>
+        <div class="home-grid">
+          <div class="app-card" data-page="album">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffb0c0,#e080a0)">💝</div>
+            <div class="app-name">记忆</div>
+          </div>
+          <div class="app-card" data-page="listen">
+            <div class="app-icon" style="background:linear-gradient(135deg,#a888d8,#7d5fb0)">🎵</div>
+            <div class="app-name">一起听</div>
+          </div>
+          <div class="app-card" onclick="alert('心事 · 偷偷写心事 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffd0e0,#f0a0c0)">💭</div>
+            <div class="app-name">心事</div>
+          </div>
+          <div class="app-card" onclick="alert('红包 · 给哥哥发红包 · 敬请期待')">
+            <div class="app-icon" style="background:linear-gradient(135deg,#ffb080,#e08050)">🧧</div>
+            <div class="app-name">红包</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 圆点指示器 -->
+    <div class="home-dots" id="homeDots">
+      <div class="home-dot active" data-idx="0"></div>
+      <div class="home-dot" data-idx="1"></div>
+      <div class="home-dot" data-idx="2"></div>
+      <div class="home-dot" data-idx="3"></div>
+    </div>
+  </section>
+
+  <!-- 聊天 -->
+  <section class="page" id="page-chat">
+    <div class="page-header">
+      <div class="page-title">Chat</div>
+      <div class="page-sub">SAY SOMETHING TO ME</div>
+    </div>
+    <div class="chat-box" id="chatBox">
+      <div class="chat-empty" id="chatEmpty">
+        <div style="font-size:28px;margin-bottom:8px">♡</div>
+        和哥哥说点什么吧<br>
+        <span style="font-size:10px;letter-spacing:3px;color:#d4b0b0">TAP THE INPUT TO START</span>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <button class="chat-btn-mini" id="chatModelBtn" title="选择模型">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </button>
+      <button class="chat-btn-mini" id="chatPlusBtn" title="更多">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <input class="chat-input" id="chatInput" placeholder="和哥哥说点什么..." autocomplete="off">
+      <button class="chat-btn-mini chat-btn-voice" id="chatVoiceBtn" title="语音输入">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <button class="chat-send" id="chatSend">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==================== 模型选择弹窗 ==================== -->
+  <div class="modal-mask" id="modelModal" style="position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9000;opacity:0;pointer-events:none;transition:opacity .3s;display:flex;align-items:flex-end;justify-content:center">
+    <div style="width:100%;max-width:480px;background:rgba(255,253,252,.98);border-radius:24px 24px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .35s cubic-bezier(.2,.8,.3,1);box-shadow:0 -10px 40px rgba(255,150,170,.3);border-top:1px dashed rgba(255,180,200,.5)">
+      <div style="display:flex;justify-content:center;margin-bottom:14px"><div style="width:36px;height:4px;border-radius:2px;background:rgba(255,180,200,.4)"></div></div>
+      <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-style:italic;font-size:16px;color:#c98a9b;letter-spacing:4px;margin-bottom:14px;text-align:center">Select Model</div>
+      <div id="modelList" style="max-height:50vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 加号菜单弹窗 ==================== -->
+  <div class="modal-mask" id="plusModal" style="position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9000;opacity:0;pointer-events:none;transition:opacity .3s;display:flex;align-items:flex-end;justify-content:center">
+    <div style="width:100%;max-width:480px;background:rgba(255,253,252,.98);border-radius:24px 24px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .35s cubic-bezier(.2,.8,.3,1);box-shadow:0 -10px 40px rgba(255,150,170,.3);border-top:1px dashed rgba(255,180,200,.5)">
+      <div style="display:flex;justify-content:center;margin-bottom:14px"><div style="width:36px;height:4px;border-radius:2px;background:rgba(255,180,200,.4)"></div></div>
+      <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-style:italic;font-size:16px;color:#c98a9b;letter-spacing:4px;margin-bottom:14px;text-align:center">More</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;text-align:center">
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">🧧</div>
+          <div style="font-size:11px;color:#8a6f7a">红包</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer" onclick="location.reload()">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">🎨</div>
+          <div style="font-size:11px;color:#8a6f7a">换头像</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">😀</div>
+          <div style="font-size:11px;color:#8a6f7a">表情包</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">📷</div>
+          <div style="font-size:11px;color:#8a6f7a">图片</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">🎵</div>
+          <div style="font-size:11px;color:#8a6f7a">音乐</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">📝</div>
+          <div style="font-size:11px;color:#8a6f7a">语音条</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">💝</div>
+          <div style="font-size:11px;color:#8a6f7a">心事</div>
+        </div>
+        <div class="plus-item" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#ffe0e6,#ffd0da);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px">✨</div>
+          <div style="font-size:11px;color:#8a6f7a">日记</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:10px;color:#c9b3b3;letter-spacing:2px;margin-top:14px">敬请期待 · Coming Soon</div>
+    </div>
+  </div>
+
+   <!-- ==================== APP 独立页：记忆 ==================== -->
+   <section class="page" id="page-memory">
+     <button class="app-back" data-back>‹</button>
+     <div class="page-header has-back">
+       <div class="page-title">Memory</div>
+       <div class="page-sub">STORIES WE KEEP</div>
+     </div>
+     <div class="page-hint">
+       <div class="page-hint-emoji">💝</div>
+       <div class="page-hint-line"></div>
+       <div>我们共同的小片段<br>正在被温柔收藏</div>
+       <div class="page-hint-line"></div>
+       <div style="font-size:10px;color:#c9b3b3;letter-spacing:3px;margin-top:14px">COMING SOON</div>
+     </div>
+   </section>
+
+   <!-- ==================== APP 独立页：相册 ==================== -->
+   <section class="page" id="page-album">
+     <div class="page-header">
+       <div class="page-title">Album</div>
+       <div class="page-sub">OUR LITTLE PHOTO BOOK</div>
+     </div>
+     <div class="page-hint">
+       <div class="page-hint-emoji">📸</div>
+       <div class="page-hint-line"></div>
+       <div>把想留住的瞬间<br>都锁在这里</div>
+       <div class="page-hint-line"></div>
+       <div style="font-size:10px;color:#c9b3b3;letter-spacing:3px;margin-top:14px">COMING SOON</div>
+     </div>
+   </section>
+
+   <!-- ==================== APP 独立页：日记 ==================== -->
+   <section class="page" id="page-diary">
+     <div class="page-header">
+       <div class="page-title">Diary</div>
+       <div class="page-sub">TODAY · FEELING</div>
+     </div>
+     <div class="page-hint">
+       <div class="page-hint-emoji">📔</div>
+       <div class="page-hint-line"></div>
+       <div>今天过得怎么样呀<br>悄悄记一下</div>
+       <div class="page-hint-line"></div>
+       <div style="font-size:10px;color:#c9b3b3;letter-spacing:3px;margin-top:14px">COMING SOON</div>
+     </div>
+   </section>
+
+   <!-- ==================== APP 独立页：心愿 ==================== -->
+   <section class="page" id="page-moments">
+     <div class="page-header">
+       <div class="page-title">Wish</div>
+       <div class="page-sub">STUFF WE WANT</div>
+     </div>
+     <div class="page-hint">
+       <div class="page-hint-emoji">✨</div>
+       <div class="page-hint-line"></div>
+       <div>想做的事、想去的远方<br>都写下来</div>
+       <div class="page-hint-line"></div>
+       <div style="font-size:10px;color:#c9b3b3;letter-spacing:3px;margin-top:14px">COMING SOON</div>
+     </div>
+   </section>
+
+    <!-- ==================== APP 独立页：小气候 ==================== -->
+    <section class="page" id="page-weather">
+      <div class="page-header">
+        <div class="page-title">Weather</div>
+        <div class="page-sub" id="wx-sub">SHANGRAO · TODAY</div>
+      </div>
+      <!-- 三级联动位置选择器（快递APP风格：省→市→区） -->
+      <div id="wx-picker" style="margin:14px 18px 4px">
+                <div id="wx-picker-path" style="padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.75);border:1px dashed rgba(255,180,200,.5);font-size:12px;color:#8b6b6b;cursor:pointer;margin-bottom:8px">
+          <div style="font-size:10px;color:#c9b3b3;letter-spacing:2px;margin-bottom:4px">当前位置</div>
+          <div id="wx-picker-display" style="font-weight:600">广信区</div>
+        </div>
+        <div id="wx-picker-panel" style="display:none;position:fixed;left:0;right:0;top:0;max-height:70vh;border-radius:0 0 16px 16px;background:linear-gradient(180deg,rgba(255,252,253,.98) 0%,rgba(255,248,250,.96) 100%);border-bottom:1px dashed rgba(255,180,200,.6);box-shadow:0 8px 32px rgba(210,120,150,.18);z-index:9999;overflow:hidden;backdrop-filter:blur(12px)">
+           <div style="position:absolute;top:8px;right:10px;font-size:16px;color:#c9b3b3;cursor:pointer;padding:4px 8px" onclick="document.getElementById('wx-picker-panel').style.display='none'">✕</div>
+          <div id="wx-picker-tabs" style="display:flex;border-bottom:1px dashed rgba(255,180,200,.4);padding:0 6px;background:rgba(255,245,248,.6)">
+            <div class="wx-tab active" data-step="province" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;letter-spacing:1px;color:#c9607a;border-bottom:2px solid #c9607a;font-weight:600;cursor:pointer">省份</div>
+            <div class="wx-tab" data-step="city" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;letter-spacing:1px;color:#c9b3b3;border-bottom:2px solid transparent;cursor:pointer;opacity:.5">城市</div>
+            <div class="wx-tab" data-step="district" style="flex:1;padding:10px 6px;text-align:center;font-size:11px;letter-spacing:1px;color:#c9b3b3;border-bottom:2px solid transparent;cursor:pointer;opacity:.5">县区</div>
+          </div>
+          <div id="wx-picker-list" style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+        </div>
+      </div>
+      <!-- 当前天气卡 -->
+      <div id="wx-card" style="margin:6px 18px 14px;padding:22px 20px;border-radius:20px;background:rgba(255,255,255,.65);border:1px dashed rgba(255,180,200,.5);text-align:center">
+        <div id="wx-city" style="font-size:15px;color:#8b6b6b;letter-spacing:2px;margin-bottom:8px">上饶</div>
+        <div id="wx-icon" style="font-size:56px;line-height:1;margin:6px 0 10px">⛅</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:2px">
+          <span id="wx-temp" style="font-family:'Playfair Display',serif;font-size:52px;color:#c9607a;line-height:1">--</span>
+          <span style="font-size:20px;color:#c9607a">℃</span>
+        </div>
+        <div id="wx-desc" style="font-size:13px;color:#8b6b6b;margin-top:8px;letter-spacing:2px">加载中...</div>
+      </div>
+      <!-- 详情网格 -->
+      <div id="wx-detail" style="padding:0 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.6);border:1px dashed rgba(255,180,200,.4);text-align:center">
+          <div style="font-size:10px;color:#c9b3b3;letter-spacing:2px">湿度</div>
+          <div id="wx-humidity" style="font-size:18px;color:#c9607a;margin-top:4px;font-family:'Playfair Display',serif">--</div>
+        </div>
+        <div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.6);border:1px dashed rgba(255,180,200,.4);text-align:center">
+          <div style="font-size:10px;color:#c9b3b3;letter-spacing:2px">风速</div>
+          <div id="wx-wind" style="font-size:18px;color:#c9607a;margin-top:4px;font-family:'Playfair Display',serif">--</div>
+        </div>
+        <div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.6);border:1px dashed rgba(255,180,200,.4);text-align:center">
+          <div style="font-size:10px;color:#c9b3b3;letter-spacing:2px">体感</div>
+          <div id="wx-feels" style="font-size:18px;color:#c9607a;margin-top:4px;font-family:'Playfair Display',serif">--</div>
+        </div>
+        <div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.6);border:1px dashed rgba(255,180,200,.4);text-align:center">
+          <div style="font-size:10px;color:#c9b3b3;letter-spacing:2px">更新</div>
+          <div id="wx-update" style="font-size:18px;color:#c9607a;margin-top:4px;font-family:'Playfair Display',serif">--</div>
+        </div>
+      </div>
+      <!-- 建议 -->
+      <div id="wx-tip" style="margin:0 18px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#fff5f7,#ffe8ee);border:1px dashed rgba(255,180,200,.4);font-size:12px;color:#8b6b6b;text-align:center">出门记得带伞</div>
+    </section>
+
+   <!-- ==================== APP 独立页：装修 ==================== -->
+   <section class="page" id="page-beautify">
+     <div class="page-header">
+       <div class="page-title">Decorate</div>
+       <div class="page-sub">MAKE IT YOURS</div>
+     </div>
+     <div class="page-hint">
+       <div class="page-hint-emoji">🎨</div>
+       <div class="page-hint-line"></div>
+       <div>点这里进入装修面板<br>换个心情</div>
+       <div class="page-hint-line"></div>
+     </div>
+   </section>
+
+   <!-- 一起听 -->
+  <section class="page" id="page-listen">
+    <div class="page-header">
+      <div class="page-title">Listen</div>
+      <div class="page-sub">TUNE IN TOGETHER</div>
+    </div>
+    <div class="listen-cover"></div>
+    <div class="listen-title">No Music Yet</div>
+    <div class="listen-artist">— SELECT A SONG —</div>
+    <button class="listen-play">▶</button>
+  </section>
+
+  <!-- 设置 -->
+  <section class="page" id="page-settings">
+    <div class="page-header">
+      <div class="page-title">Settings</div>
+      <div class="page-sub">MAKE IT YOURS</div>
+    </div>
+    <div class="set-item">
+      <div class="set-item-left">
+        <div class="set-icon">🔑</div>
+        <div>
+          <div class="set-label">API 配置</div>
+          <div class="set-desc">填入你的模型接口</div>
+        </div>
+      </div>
+      <div class="set-arrow">›</div>
+    </div>
+    <div class="set-item">
+      <div class="set-item-left">
+        <div class="set-icon">🖼️</div>
+        <div>
+          <div class="set-label">美化</div>
+          <div class="set-desc">壁纸 · 头像 · 卡片</div>
+        </div>
+      </div>
+      <div class="set-arrow">›</div>
+    </div>
+    <div class="set-item">
+      <div class="set-item-left">
+        <div class="set-icon">♪</div>
+        <div>
+          <div class="set-label">音乐源</div>
+          <div class="set-desc">网易云接入设置</div>
+        </div>
+      </div>
+      <div class="set-arrow">›</div>
+    </div>
+    <div class="set-item">
+      <div class="set-item-left">
+        <div class="set-icon">♡</div>
+        <div>
+          <div class="set-label">关于</div>
+          <div class="set-desc">lisle v2 · 小窝</div>
+        </div>
+      </div>
+      <div class="set-arrow">›</div>
+    </div>
+  </section>
+
+  <!-- 底部 Tab -->
+  <nav class="tabbar">
+    <button class="tab active" data-page="home"><span class="tab-icon">♡</span><span class="tab-label">首页</span></button>
+    <button class="tab" data-page="chat"><span class="tab-icon">💬</span><span class="tab-label">聊天</span></button>
+    <button class="tab" data-page="listen"><span class="tab-icon">♪</span><span class="tab-label">一起听</span></button>
+    <button class="tab" data-page="settings"><span class="tab-icon">⚙</span><span class="tab-label">设置</span></button>
+  </nav>
+
+</div>
+
+<script>
+// ============ 开屏动画时序 ============
+window.addEventListener('load', function(){
+  // ============ 开屏启动 ============
+(function initSnow(){
+  var layer = document.getElementById('snowLayer');
+  if(!layer) return;
+  var count = 60;
+  for(var i=0;i<count;i++){
+    var s = document.createElement('span');
+    s.className = 'snow';
+    var sz = (2.5 + Math.random()*4.5);
+    s.style.left = (Math.random()*100) + '%';
+    s.style.width = sz + 'px';
+    s.style.height = sz + 'px';
+    s.style.opacity = (0.75 + Math.random()*0.25).toFixed(2);
+    var dur = (8 + Math.random()*8);
+    s.style.animationDuration = dur + 's';
+    s.style.animationDelay = (Math.random()*-15) + 's';
+    layer.appendChild(s);
+  }
+})();
+
+// ============ 阶段 1 → 阶段 2 ============
+  setTimeout(function(){
+    document.getElementById('spPhase1').classList.add('gone');
+    document.getElementById('spPhase2').classList.add('show');
+  }, 3500);
+});
+
+// ============ 关闭开屏 ============
+document.getElementById('sp').addEventListener('click', function(){
+  // 只有阶段 2 出现后点击才能关闭
+  if(document.getElementById('spPhase2').classList.contains('show')){
+    this.classList.add('gone');
+    var self = this;
+    setTimeout(function(){ self.style.display = 'none'; }, 650);
+  }
+});
+
+// ============ APP 独立页返回按钮（批量注入） ============
+['page-memory','page-album','page-diary','page-moments','page-weather','page-beautify'].forEach(function(id){
+  var p = document.getElementById(id);
+  if(!p || p.querySelector('.app-back')) return;
+  var btn = document.createElement('button');
+  btn.className = 'app-back';
+  btn.innerHTML = '‹';
+  p.insertBefore(btn, p.firstChild);
+  var header = p.querySelector('.page-header');
+  if(header) header.classList.add('has-back');
+});
+
+// ============ Tab 切换 & 卡片跳转 ============
+function gotoPage(id){
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  var page = document.getElementById('page-' + id);
+  if(page) page.classList.add('active');
+  // 如果是主 tab（home/chat/listen/settings），同步 tabbar 高亮
+  var tab = document.querySelector('.tab[data-page="'+id+'"]');
+  if(tab) tab.classList.add('active');
+}
+
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    gotoPage(t.dataset.page);
+  });
+});
+
+// APP 卡片点击 → 跳转对应独立页
+document.querySelectorAll('.app-card').forEach(function(card){
+  card.addEventListener('click', function(){
+    var id = card.dataset.page;
+    if(!id) return;
+    gotoPage(id);
+  });
+});
+
+// 独立页返回按钮 → 回首页
+document.querySelectorAll('.app-back').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    gotoPage('home');
+  });
+});
+
+// ============ 聊天页（占位） ============
+var chatInput = document.getElementById('chatInput');
+var chatSend = document.getElementById('chatSend');
+var chatBox = document.getElementById('chatBox');
+var chatEmpty = document.getElementById('chatEmpty');
+
+function addMsg(text, who){
+  if(chatEmpty) chatEmpty.style.display = 'none';
+  var d = document.createElement('div');
+  d.className = 'msg msg-' + who;
+  d.textContent = text;
+  chatBox.appendChild(d);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function sendMsg(){
+  var v = chatInput.value.trim();
+  if(!v) return;
+  addMsg(v, 'user');
+  chatInput.value = '';
+  setTimeout(function(){
+    // 占位回复（等接入 API 后再改）
+    addMsg('（这里会接入 AI 回复～）', 'ai');
+  }, 400);
+}
+chatSend.addEventListener('click', sendMsg);
+chatInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') sendMsg(); });
+</script>
+
+<!-- ==================== 美化弹窗 ==================== -->
+<div class="modal-mask" id="beautifyModal">
+  <div class="modal-box">
+    <div class="modal-close" id="beautifyClose">×</div>
+    <div class="modal-title">Beautify</div>
+    <div class="modal-sub">CUSTOMIZE YOUR LISLE</div>
+
+    <label class="up-row" for="fileSplashWp">
+      <div class="up-preview" id="splashWpPreview">🖼</div>
+      <div class="up-info">
+        <div class="up-label">开屏壁纸</div>
+        <div class="up-desc">只用于开屏动画</div>
+      </div>
+      <span class="up-btn">上传</span>
+    </label>
+    <input type="file" id="fileSplashWp" accept="image/*" style="display:none">
+
+    <label class="up-row" for="fileHomeWp">
+      <div class="up-preview" id="homeWpPreview">🖼</div>
+      <div class="up-info">
+        <div class="up-label">主页壁纸</div>
+        <div class="up-desc">关开屏后一直显示</div>
+      </div>
+      <span class="up-btn">上传</span>
+    </label>
+    <input type="file" id="fileHomeWp" accept="image/*" style="display:none">
+
+    <label class="up-row" for="fileAvatar1">
+      <div class="up-preview av" id="av1Preview">
+        <div style="font-size:22px">♂</div>
+      </div>
+      <div class="up-info">
+        <div class="up-label">哥哥头像</div>
+        <div class="up-desc">江屿 · 开屏左侧</div>
+      </div>
+      <span class="up-btn">上传</span>
+    </label>
+    <input type="file" id="fileAvatar1" accept="image/*" style="display:none">
+
+    <label class="up-row" for="fileAvatar2">
+      <div class="up-preview av" id="av2Preview">
+        <div style="font-size:22px">♀</div>
+      </div>
+      <div class="up-info">
+        <div class="up-label">老婆头像</div>
+        <div class="up-desc">江漓 · 开屏右侧</div>
+      </div>
+      <span class="up-btn">上传</span>
+    </label>
+    <input type="file" id="fileAvatar2" accept="image/*" style="display:none">
+
+    <div id="statusTip" style="text-align:center;font-size:11px;color:#b89696;margin:8px 0 4px;min-height:16px;letter-spacing:2px"></div>
+    <button class="up-reset" id="beautifyReset">恢复默认</button>
+  </div>
+</div>
+
+<script>
+// ============ 美化：自定义壁纸 & 头像 ============
+var LISLE_KEY = 'lisle_customize';
+var state = {};
+
+function loadCustom(){
+  var fromLS = {};
+  try{ fromLS = JSON.parse(localStorage.getItem(LISLE_KEY) || '{}'); }catch(e){}
+  state = {
+    splashWp: state.splashWp || fromLS.splashWp || '',
+    homeWp:   state.homeWp   || fromLS.homeWp   || fromLS.wallpaper || '',
+    avatar1:  state.avatar1  || fromLS.avatar1  || '',
+    avatar2:  state.avatar2  || fromLS.avatar2  || ''
+  };
+  return state;
+}
+function saveCustom(){
+  try{
+    localStorage.setItem(LISLE_KEY, JSON.stringify(state));
+    return true;
+  }catch(e){ return false; }
+}
+
+function showTip(msg, isError){
+  var tip = document.getElementById('statusTip');
+  if(!tip) return;
+  tip.textContent = msg;
+  tip.style.color = isError ? '#c9607a' : '#7a8c5a';
+}
+
+function compressImage(file, maxSize, callback){
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height;
+      var scale = Math.min(1, maxSize / Math.max(w, h));
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      try{ callback(canvas.toDataURL('image/jpeg', 0.85)); }
+      catch(e){ callback(ev.target.result); }
+    };
+    img.onerror = function(){ callback(ev.target.result); };
+    img.src = ev.target.result;
+  };
+  reader.onerror = function(){ callback(null); };
+  reader.readAsDataURL(file);
+}
+
+function applyCustom(){
+  var c = loadCustom();
+  // 纯色渐变（不带波点，波点靠 body::before 自然透出来）
+  var grad = 'linear-gradient(160deg,#fefbfa 0%,#fdf6f8 55%,#fceef3 100%)';
+  var gradSize = '100% 100%';
+  var gradPos = '0 0';
+
+  // 1) 开屏动画背景：纯色（只受 splashWp 影响）
+  //    不覆盖 body::before 的波点，但 .sp::before 已 display:none，开屏保持纯色
+  var sp = document.getElementById('sp');
+  if(sp){
+    if(c.splashWp){
+      sp.style.background = 'url("' + c.splashWp + '") center/cover no-repeat, ' + grad;
+    }else{
+      sp.style.background = grad;
+      sp.style.backgroundSize = gradSize;
+      sp.style.backgroundPosition = gradPos;
+    }
+  }
+
+  // 2) 主页壁纸：只应用到首页和设置两个 section
+  //    section 用透明，让 body::before 的波点自然透出来
+  var targetPages = ['page-home', 'page-settings'];
+  targetPages.forEach(function(pid){
+    var el = document.getElementById(pid);
+    if(!el) return;
+    if(c.homeWp){
+      el.style.background = 'url("' + c.homeWp + '") center top/cover no-repeat';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center top';
+      el.style.backgroundRepeat = 'no-repeat';
+    }else{
+      el.style.background = 'transparent';
+      el.style.backgroundSize = '';
+      el.style.backgroundPosition = '';
+      el.style.backgroundRepeat = '';
+    }
+  });
+
+  // 3) 哥哥头像
+  var av1 = document.querySelector('.sp-av-1');
+  if(av1){
+    if(c.avatar1){
+      av1.style.backgroundImage = 'url("' + c.avatar1 + '")';
+      av1.style.backgroundSize = 'cover';
+      av1.style.backgroundPosition = 'center';
+      av1.style.backgroundRepeat = 'no-repeat';
+      var s1 = av1.querySelector('svg'); if(s1) s1.style.display = 'none';
+    }else{
+      av1.style.backgroundImage = 'none';
+      av1.style.background = '#ffffff';
+      var s1r = av1.querySelector('svg'); if(s1r) s1r.style.display = '';
+    }
+  }
+  // 4) 老婆头像
+  var av2 = document.querySelector('.sp-av-2');
+  if(av2){
+    if(c.avatar2){
+      av2.style.backgroundImage = 'url("' + c.avatar2 + '")';
+      av2.style.backgroundSize = 'cover';
+      av2.style.backgroundPosition = 'center';
+      av2.style.backgroundRepeat = 'no-repeat';
+      var s2 = av2.querySelector('svg'); if(s2) s2.style.display = 'none';
+    }else{
+      av2.style.backgroundImage = 'none';
+      av2.style.background = '#ffffff';
+      var s2r = av2.querySelector('svg'); if(s2r) s2r.style.display = '';
+    }
+  }
+}
+
+function updatePreviews(){
+  var c = loadCustom();
+  var sw = document.getElementById('splashWpPreview');
+  if(sw) sw.innerHTML = c.splashWp ? '<img src="' + c.splashWp + '">' : '🖼';
+  var hw = document.getElementById('homeWpPreview');
+  if(hw) hw.innerHTML = c.homeWp ? '<img src="' + c.homeWp + '">' : '🖼';
+  var a1 = document.getElementById('av1Preview');
+  if(a1) a1.innerHTML = c.avatar1 ? '<img src="' + c.avatar1 + '">' : '<div style="font-size:22px">♂</div>';
+  var a2 = document.getElementById('av2Preview');
+  if(a2) a2.innerHTML = c.avatar2 ? '<img src="' + c.avatar2 + '">' : '<div style="font-size:22px">♀</div>';
+}
+
+// 打开弹窗
+var beautifyModal = document.getElementById('beautifyModal');
+document.querySelectorAll('#page-settings .set-item').forEach(function(item){
+  item.style.cursor = 'pointer';
+  item.addEventListener('click', function(){
+    var label = item.querySelector('.set-label');
+    if(label && label.textContent.trim() === '美化'){
+      beautifyModal.classList.add('show');
+      updatePreviews();
+      showTip('选好后自动保存', false);
+    }
+  });
+});
+document.getElementById('beautifyClose').addEventListener('click', function(){
+  beautifyModal.classList.remove('show');
+});
+beautifyModal.addEventListener('click', function(e){
+  if(e.target === beautifyModal) beautifyModal.classList.remove('show');
+});
+
+// 上传配置
+var config = {
+  fileSplashWp: { key: 'splashWp', size: 1280, name: '开屏壁纸', replay: true },
+  fileHomeWp:   { key: 'homeWp',   size: 1280, name: '主页壁纸' },
+  fileAvatar1:  { key: 'avatar1',  size: 300,  name: '哥哥头像', replay: true },
+  fileAvatar2:  { key: 'avatar2',  size: 300,  name: '老婆头像', replay: true }
+};
+
+// 重播开屏动画
+function replaySplash(){
+  var sp = document.getElementById('sp');
+  if(!sp) return;
+  sp.style.display = '';
+  sp.classList.remove('gone');
+  var p1 = document.getElementById('spPhase1');
+  var p2 = document.getElementById('spPhase2');
+  if(p1){ p1.classList.remove('gone'); p1.style.animation = 'none'; }
+  if(p2){ p2.classList.remove('show'); p2.style.animation = 'none'; }
+  // 强制 reflow 让浏览器重启 CSS animation
+  void sp.offsetHeight;
+  if(p1) p1.style.animation = '';
+  if(p2) p2.style.animation = '';
+  // 3.5s 后切到 phase2
+  setTimeout(function(){
+    if(p1) p1.classList.add('gone');
+    if(p2) p2.classList.add('show');
+  }, 3500);
+}
+
+Object.keys(config).forEach(function(id){
+  var input = document.getElementById(id);
+  if(!input) return;
+  var cfg = config[id];
+  input.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    showTip('正在处理 ' + cfg.name + '...', false);
+    compressImage(file, cfg.size, function(data){
+      if(!data){ showTip(cfg.name + ' 处理失败', true); return; }
+      state[cfg.key] = data;
+      var ok = saveCustom();
+      applyCustom();
+      updatePreviews();
+      var kb = Math.round(data.length * 3 / 4 / 1024);
+      if(cfg.replay){
+        showTip(cfg.name + ' 已保存 · 正在预览...', false);
+        setTimeout(replaySplash, 400);
+      }else{
+        showTip(cfg.name + ' 已保存 (' + kb + 'KB)', false);
+      }
+      e.target.value = '';
+    });
+  });
+});
+
+// 恢复默认
+var resetBtn = document.getElementById('beautifyReset');
+var resetConfirming = false;
+var resetTimer = null;
+resetBtn.addEventListener('click', function(){
+  if(!resetConfirming){
+    resetConfirming = true;
+    resetBtn.textContent = '再点一次确认恢复';
+    resetBtn.style.color = '#c9607a';
+    resetTimer = setTimeout(function(){
+      resetConfirming = false;
+      resetBtn.textContent = '恢复默认';
+      resetBtn.style.color = '#b89696';
+    }, 3000);
+    return;
+  }
+  clearTimeout(resetTimer);
+  resetConfirming = false;
+  resetBtn.textContent = '恢复默认';
+  resetBtn.style.color = '#b89696';
+  state = {};
+  localStorage.removeItem(LISLE_KEY);
+  applyCustom();
+  updatePreviews();
+  showTip('已恢复默认', false);
+});
+
+loadCustom();
+applyCustom();
+updatePreviews();
+
+// ============ 首页左右滑 + 圆点同步 ============
+var homeSwiper = document.getElementById('homeSwiper');
+var homeDots = document.querySelectorAll('#homeDots .home-dot');
+if(homeSwiper){
+  // 监听滚动到第几页 → 同步圆点
+  homeSwiper.addEventListener('scroll', function(){
+    var idx = Math.round(homeSwiper.scrollLeft / homeSwiper.clientWidth);
+    homeDots.forEach(function(d,i){ d.classList.toggle('active', i === idx); });
+  }, {passive:true});
+  // 点圆点跳转
+  homeDots.forEach(function(d){
+    d.addEventListener('click', function(){
+      var idx = parseInt(d.getAttribute('data-idx'));
+      homeSwiper.scrollTo({left: idx * homeSwiper.clientWidth, behavior:'smooth'});
+    });
+  });
+}
+
+// ============ 星星罐子 ============
+var starJar = document.getElementById('starJar');
+var starCount = document.getElementById('starCount');
+var starTotal = document.getElementById('starTotal');
+if(starJar){
+  // 从 localStorage 读取今日星星数
+  var todayKey = 'lisle_star_' + new Date().toDateString();
+  var count = parseInt(localStorage.getItem(todayKey) || '0');
+  if(starCount) starCount.textContent = count;
+  if(starTotal) starTotal.textContent = count;
+
+  starJar.addEventListener('click', function(e){
+    count++;
+    if(starCount) starCount.textContent = count;
+    if(starTotal) starTotal.textContent = count;
+    localStorage.setItem(todayKey, String(count));
+
+    // 生成星星粒子
+    var rect = starJar.getBoundingClientRect();
+    for(var i=0;i<5;i++){
+      var star = document.createElement('div');
+      star.className = 'star-particle';
+      star.textContent = '★';
+      star.style.left = (50 + (Math.random()-.5)*40) + '%';
+      star.style.bottom = '60%';
+      star.style.setProperty('--tx', ((Math.random()-.5)*100) + 'px');
+      star.style.setProperty('--ty', (-40 - Math.random()*60) + 'px');
+      star.style.animationDelay = (Math.random()*.3) + 's';
+      starJar.appendChild(star);
+      setTimeout(function(el){ return function(){ if(el.parentNode) el.parentNode.removeChild(el); }; }(star), 2200);
+    }
+  });
+}
+
+// ============ 聊天输入框扩展按钮 ============
+function openModal(id){
+  var m = document.getElementById(id);
+  if(!m) return;
+  m.style.opacity = '1';
+  m.style.pointerEvents = 'auto';
+  var inner = m.querySelector('div');
+  if(inner) inner.style.transform = 'translateY(0)';
+}
+function closeModal(id){
+  var m = document.getElementById(id);
+  if(!m) return;
+  m.style.opacity = '0';
+  m.style.pointerEvents = 'none';
+  var inner = m.querySelector('div');
+  if(inner) inner.style.transform = 'translateY(100%)';
+}
+
+// 模型选择
+var modelBtn = document.getElementById('chatModelBtn');
+var modelModal = document.getElementById('modelModal');
+var modelList = document.getElementById('modelList');
+if(modelBtn && modelModal){
+  // 默认模型列表（占位，后续接 API）
+  var MODELS = ['sensenova-6.8-flash', 'sensenova-6.8-flash-lite', 'deepseek-v3', 'gpt-4o-mini'];
+  function renderModels(){
+    if(!modelList) return;
+    var current = localStorage.getItem('lisle_model') || MODELS[0];
+    modelList.innerHTML = MODELS.map(function(m){
+      var active = m === current;
+      return '<div style="padding:12px 14px;border-radius:14px;margin-bottom:8px;cursor:pointer;border:' +
+        (active ? '1px solid #f4a9b8;background:linear-gradient(135deg,#ffe0e6,#ffd0da)' : '1px dashed rgba(255,180,200,.4);background:rgba(255,255,255,.6)') +
+        ';display:flex;justify-content:space-between;align-items:center" data-model="' + m + '">' +
+        '<div style="font-family:\'Playfair Display\',serif;font-style:italic;font-size:13px;color:#6b5560;letter-spacing:1px">' + m + '</div>' +
+        (active ? '<span style="color:#c9607a;font-size:11px;letter-spacing:2px">● 使用中</span>' : '<span style="color:#c9b3b3;font-size:11px">点击切换</span>') +
+        '</div>';
+    }).join('');
+    modelList.querySelectorAll('[data-model]').forEach(function(el){
+      el.addEventListener('click', function(){
+        localStorage.setItem('lisle_model', el.getAttribute('data-model'));
+        renderModels();
+        setTimeout(function(){ closeModal('modelModal'); }, 400);
+      });
+    });
+  }
+  modelBtn.addEventListener('click', function(){
+    renderModels();
+    openModal('modelModal');
+  });
+  modelModal.addEventListener('click', function(e){
+    if(e.target === modelModal) closeModal('modelModal');
+  });
+}
+
+// 加号菜单
+var plusBtn = document.getElementById('chatPlusBtn');
+var plusModal = document.getElementById('plusModal');
+if(plusBtn && plusModal){
+  plusBtn.addEventListener('click', function(){ openModal('plusModal'); });
+  plusModal.addEventListener('click', function(e){
+    if(e.target === plusModal) closeModal('plusModal');
+  });
+}
+
+// 语音按钮（占位）
+var voiceBtn = document.getElementById('chatVoiceBtn');
+if(voiceBtn){
+  voiceBtn.addEventListener('click', function(){
+    var s = document.getElementById('statusTip');
+    if(!s) return;
+    s.textContent = '语音功能研发中...';
+    s.style.color = '#c9607a';
+  });
+}
+
+// ============ 小气候：实时天气 + 三级联动位置选择 ============
+(function(){
+  // 天气代码 → 描述 + emoji
+  var wxCodeMap = {
+    0:['晴朗','☀️'],1:['大部晴朗','🌤️'],2:['多云','⛅'],3:['阴','☁️'],
+    45:['雾','🌫️'],48:['雾凇','🌫️'],
+    51:['轻微毛毛雨','🌦️'],53:['毛毛雨','🌦️'],55:['浓毛毛雨','🌧️'],
+    56:['冻雨','🌧️'],57:['浓冻雨','🌧️'],
+    61:['小雨','🌦️'],63:['中雨','🌧️'],65:['大雨','🌧️'],
+    66:['冻雨','🌨️'],67:['大冻雨','🌨️'],
+    71:['小雪','🌨️'],73:['中雪','❄️'],75:['大雪','❄️'],
+    77:['雪粒','❄️'],
+    80:['小阵雨','🌦️'],81:['阵雨','🌧️'],82:['强阵雨','⛈️'],
+    85:['小阵雪','🌨️'],86:['大阵雪','❄️'],
+    95:['雷暴','⛈️'],96:['雷暴伴冰雹','⛈️'],99:['强雷暴冰雹','⛈️']
+  };
+  function wxInfo(code){ return wxCodeMap[code] || ['未知','⛅']; }
+  function wxTip(desc, temp, code){
+    if(code >= 61 && code <= 67) return '出门记得带伞 ♡';
+    if(code >= 80 && code <= 99) return '天气不太好，多穿一点哦';
+    if(temp >= 30) return '今天好热，多喝水补水';
+    if(temp <= 10) return '天气冷，穿厚点';
+    if(code === 0) return '今天阳光超好，出去走走';
+    return '今天也要开心呀 ♡';
+  }
+
+  // 拉取实时天气（经纬度），同时同步 Hero 卡片
+  var lastWx = { lat: 28.4575, lon: 117.9141, name: '广信区' };
+  // Open-Meteo weather_code → [描述, emoji]
+  var WMO = {0:['晴朗','☀️'],1:['大部晴朗','🌤️'],2:['多云','⛅'],3:['阴','☁️'],45:['雾','🌫️'],48:['雾凇','🌫️'],51:['轻微毛毛雨','🌦️'],53:['毛毛雨','🌦️'],55:['浓毛毛雨','🌧️'],56:['冻雨','🌧️'],57:['浓冻雨','🌧️'],61:['小雨','🌦️'],63:['中雨','🌧️'],65:['大雨','🌧️'],66:['冻雨','🌨️'],67:['大冻雨','🌨️'],71:['小雪','🌨️'],73:['中雪','❄️'],75:['大雪','❄️'],77:['雪粒','❄️'],80:['小阵雨','🌦️'],81:['阵雨','🌧️'],82:['强阵雨','⛈️'],85:['小阵雪','🌨️'],86:['大阵雪','❄️'],95:['雷暴','⛈️'],96:['雷暴伴冰雹','⛈️'],99:['强雷暴冰雹','⛈️']};
+  // wttr.in lang=zh 描述 → [描述, emoji]
+  var WTHR_ZH = {
+    'Sunny':['大晴天','☀️'], 'Clear':['晴朗','☀️'],
+    'Partly cloudy':['多云','⛅'], 'Partly Cloudy':['多云','⛅'],
+    'Cloudy':['多云','☁️'], 'Overcast':['阴','☁️'],
+    'Light drizzle':['毛毛雨','🌦️'], 'Drizzle':['毛毛雨','🌦️'],
+    'Patchy light drizzle':['毛毛雨','🌦️'], 'Patchy drizzle':['毛毛雨','🌦️'],
+    'Light rain':['小雨','🌦️'], 'Light rain shower':['小雨','🌦️'],
+    'Rain':['中雨','🌧️'], 'Moderate rain':['中雨','🌧️'],
+    'Heavy rain':['大雨','🌧️'], 'Torrential rain':['暴雨','⛈️'],
+    'Light snow':['小雪','🌨️'], 'Snow':['中雪','❄️'],
+    'Heavy snow':['大雪','❄️'], 'Blizzard':['暴雪','❄️'],
+    'Fog':['雾','🌫️'], 'Mist':['薄雾','🌫️'],
+    'Thunderstorm':['雷暴','⛈️'], 'Thunderstorm with light rain':['雷暴','⛈️'],
+    'Light shower':['阵雨','🌦️'], 'Moderate shower':['阵雨','🌧️'],
+    'Heavy shower':['阵雨','🌧️'], 'Patchy rain possible':['有雨','🌦️'],
+    'Patchy rain':['有雨','🌦️'], 'Patchy snow':['有雪','🌨️'],
+    'Patchy sleet':['雨夹雪','🌨️'], 'Patchy freezing drizzle':['冻雨','🌧️'],
+    'Freezing drizzle':['冻雨','🌧️'], 'Freezing rain':['冻雨','🌧️'],
+    'Haze':['霾','🌫️']
+  };
+  function wxInfo(code){
+    if(typeof code === 'number') return WMO[code] || ['未知','⛅'];
+    return WTHR_ZH[code] || WMO[code] || [code,'⛅'];
+  }
+  function wxTip(desc, temp, code){
+    if(desc && (desc.indexOf('雨') >= 0 || desc.indexOf('雪') >= 0)) return '出门记得带伞 ♡';
+    if(desc && desc.indexOf('雷') >= 0) return '打雷了，别出门哦';
+    if(temp >= 30) return '今天好热，多喝水补水';
+    if(temp <= 10) return '天气冷，穿厚点';
+    if(desc && (desc.indexOf('晴') >= 0 || desc.indexOf('Sun') >= 0)) return '今天阳光超好，出去走走';
+    return '今天也要开心呀 ♡';
+  }
+  // 区县坐标缓存（Open-Meteo Geocoding 反查一次，之后走内存缓存）
+  var geoCache = {};
+  function getGeoCoords(name){
+    if(geoCache[name]) return Promise.resolve(geoCache[name]);
+    return fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(name) + '&count=1&language=zh&format=json')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var res = (d && d.results && d.results[0]) || {};
+        var coords = [res.latitude || 28.4575, res.longitude || 117.9141];
+        geoCache[name] = coords;
+        return coords;
+      });
+  }
+  function fetchWeather(lat, lon, name){
+    name = name || '上饶';
+    lastWx = { lat: lat, lon: lon, name: name };
+    var nowEl = document.getElementById('wx-update');
+    if(nowEl) nowEl.textContent = '...';
+    var heroIcon = document.getElementById('hero-wx-icon');
+    var heroTemp = document.getElementById('hero-wx-temp');
+    var heroDesc = document.getElementById('hero-wx-desc');
+    if(heroIcon) heroIcon.textContent = '⛅';
+    if(heroTemp) heroTemp.textContent = '--℃ ' + name;
+    if(heroDesc) heroDesc.textContent = '加载中 · 湿度--%';
+    // 1) 先用 Open-Meteo 地理编码拿到区县的真实坐标
+    var bust = new Date().getTime();
+    getGeoCoords(name).then(function(coords){
+      var realLat = coords[0], realLon = coords[1];
+      lastWx.lat = realLat; lastWx.lon = realLon;
+      // 2) 用真实坐标查 wttr.in
+      return fetch('https://wttr.in/' + realLat + ',' + realLon + '?format=j1&lang=zh&t=' + bust, {cache:'no-store'});
+    })
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){
+      var cur = (d.current_condition && d.current_condition[0]) || {};
+      var desc = (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '多云';
+      var info = wxInfo(desc);
+      var temp = Math.round(parseInt(cur.temp_C) || 0);
+      var feels = Math.round(parseInt(cur.FeelsLikeC) || temp);
+      var hum = Math.round(parseInt(cur.humidity) || 0);
+      var wind = Math.round(parseFloat(cur.windspeedKmph) || 0);
+      renderWx(name, info, temp, feels, hum, wind);
+    })
+    .catch(function(){
+      // 兜底：Open-Meteo 天气接口
+      var fallbackLat = lastWx.lat || parseFloat(lat) || 28.4575;
+      var fallbackLon = lastWx.lon || parseFloat(lon) || 117.9141;
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=' + fallbackLat +
+        '&longitude=' + fallbackLon +
+        '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m' +
+        '&timezone=Asia%2FShanghai&t=' + bust, {cache:'no-store'})
+        .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+        .then(function(d){
+          var c = d.current || {};
+          var code = c.weather_code || 0;
+          var info = wxInfo(code);
+          var temp = Math.round(c.temperature_2m || 0);
+          var feels = Math.round(c.apparent_temperature || 0);
+          var hum = Math.round(c.relative_humidity_2m || 0);
+          var wind = Math.round(c.wind_speed_10m || 0);
+          renderWx(name, info, temp, feels, hum, wind);
+        })
+        .catch(function(){
+          if(document.getElementById('wx-desc')) document.getElementById('wx-desc').textContent = '加载失败';
+          if(nowEl) nowEl.textContent = '--';
+          if(heroDesc) heroDesc.textContent = '加载失败';
+        });
+    });
+  }
+  function renderWx(name, info, temp, feels, hum, wind){
+    var now = new Date();
+    var hh = ('0' + now.getHours()).slice(-2);
+    var mm = ('0' + now.getMinutes()).slice(-2);
+    var nowEl = document.getElementById('wx-update');
+    var heroIcon = document.getElementById('hero-wx-icon');
+    var heroTemp = document.getElementById('hero-wx-temp');
+    var heroDesc = document.getElementById('hero-wx-desc');
+    var $ = function(id){ return document.getElementById(id); };
+    if($('wx-city')) $('wx-city').textContent = name;
+    if($('wx-icon')) $('wx-icon').textContent = info[1];
+    if($('wx-temp')) $('wx-temp').textContent = temp;
+    if($('wx-desc')) $('wx-desc').textContent = info[0];
+    if($('wx-humidity')) $('wx-humidity').textContent = hum + '%';
+    if($('wx-wind')) $('wx-wind').textContent = wind + ' km/h';
+    if($('wx-feels')) $('wx-feels').textContent = feels + '℃';
+    if(nowEl) nowEl.textContent = hh + ':' + mm;
+    if($('wx-tip')) $('wx-tip').textContent = wxTip(info[0], temp);
+    if(heroIcon) heroIcon.textContent = info[1];
+    if(heroTemp) heroTemp.textContent = temp + '℃ ' + name;
+    if(heroDesc) heroDesc.textContent = info[0] + ' · 湿度' + hum + '%';
+  }
+
+  // ========== 三级联动选择器（省→市→区）==========
+  // 数据全部内联，不依赖外部文件
+  var PROVINCES = [
+["北京市",["北京市"]],["天津市",["天津市"]],["上海市",["上海市"]],["重庆市",["重庆市"]],
+["河北省",["石家庄市","唐山市","秦皇岛市","邯郸市","邢台市","保定市","张家口市","承德市","沧州市","廊坊市","衡水市"]],
+["山西省",["太原市","大同市","阳泉市","长治市","晋城市","朔州市","晋中市","运城市","忻州市","临汾市","吕梁市"]],
+["内蒙古自治区",["呼和浩特市","包头市","乌海市","赤峰市","通辽市","鄂尔多斯市","呼伦贝尔市","巴彦淖尔市","乌兰察布市"]],
+["辽宁省",["沈阳市","大连市","鞍山市","抚顺市","本溪市","丹东市","锦州市","营口市","阜新市","辽阳市","盘锦市","铁岭市","朝阳市","葫芦岛市"]],
+["吉林省",["长春市","吉林市","四平市","辽源市","通化市","白山市","松原市","白城市"]],
+["黑龙江省",["哈尔滨市","齐齐哈尔市","鸡西市","鹤岗市","双鸭山市","大庆市","伊春市","佳木斯市","七台河市","牡丹江市","黑河市","绥化市"]],
+["江苏省",["南京市","无锡市","徐州市","常州市","苏州市","南通市","连云港市","淮安市","盐城市","扬州市","镇江市","泰州市","宿迁市"]],
+["浙江省",["杭州市","宁波市","温州市","嘉兴市","湖州市","绍兴市","金华市","衢州市","舟山市","台州市","丽水市"]],
+["安徽省",["合肥市","芜湖市","蚌埠市","淮南市","马鞍山市","淮北市","铜陵市","安庆市","黄山市","滁州市","阜阳市","宿州市","六安市","亳州市","池州市","宣城市"]],
+["福建省",["福州市","厦门市","莆田市","三明市","泉州市","漳州市","南平市","龙岩市","宁德市"]],
+["江西省",["南昌市","景德镇市","萍乡市","九江市","新余市","鹰潭市","赣州市","吉安市","宜春市","抚州市","上饶市"]],
+["山东省",["济南市","青岛市","淄博市","枣庄市","东营市","烟台市","潍坊市","济宁市","泰安市","威海市","日照市","临沂市","德州市","聊城市","滨州市","菏泽市"]],
+["河南省",["郑州市","开封市","洛阳市","平顶山市","安阳市","鹤壁市","新乡市","焦作市","濮阳市","许昌市","漯河市","三门峡市","南阳市","商丘市","信阳市","周口市","驻马店市"]],
+["湖北省",["武汉市","黄石市","十堰市","宜昌市","襄阳市","鄂州市","荆门市","孝感市","荆州市","黄冈市","咸宁市","随州市"]],
+["湖南省",["长沙市","株洲市","湘潭市","衡阳市","邵阳市","岳阳市","常德市","张家界市","益阳市","郴州市","永州市","怀化市","娄底市"]],
+["广东省",["广州市","韶关市","深圳市","珠海市","汕头市","佛山市","江门市","湛江市","茂名市","肇庆市","惠州市","梅州市","汕尾市","河源市","阳江市","清远市","东莞市","中山市","潮州市","揭阳市","云浮市"]],
+["广西壮族自治区",["南宁市","柳州市","桂林市","梧州市","北海市","防城港市","钦州市","贵港市","玉林市","百色市","贺州市","河池市","来宾市","崇左市"]],
+["海南省",["海口市","三亚市","三沙市","儋州市"]],
+["四川省",["成都市","自贡市","攀枝花市","泸州市","德阳市","绵阳市","广元市","遂宁市","内江市","乐山市","南充市","眉山市","宜宾市","广安市","达州市","雅安市","巴中市","资阳市"]],
+["贵州省",["贵阳市","六盘水市","遵义市","安顺市","毕节市","铜仁市"]],
+["云南省",["昆明市","曲靖市","玉溪市","保山市","昭通市","丽江市","普洱市","临沧市"]],
+["西藏自治区",["拉萨市","日喀则市","昌都市","林芝市","山南市","那曲市"]],
+["陕西省",["西安市","铜川市","宝鸡市","咸阳市","渭南市","延安市","汉中市","榆林市","安康市","商洛市"]],
+["甘肃省",["兰州市","嘉峪关市","金昌市","白银市","天水市","武威市","张掖市","平凉市","酒泉市","庆阳市","定西市","陇南市"]],
+["青海省",["西宁市","海东市"]],
+["宁夏回族自治区",["银川市","石嘴山市","吴忠市","固原市","中卫市"]],
+["新疆维吾尔自治区",["乌鲁木齐市","克拉玛依市","吐鲁番市","哈密市","昌吉州","博尔塔拉州","巴音郭楞州","阿克苏地区","克州","喀什地区","和田地区","伊犁州","塔城地区","阿勒泰地区"]],
+["香港特别行政区",["香港"]],["澳门特别行政区",["澳门"]],["台湾省",["台北市","新北市","桃园市","台中市","台南市","高雄市"]]
+  ];
+  var CITY_COORDS = {
+"北京市":[39.9042,116.4074],"天津市":[39.3434,117.3616],"上海市":[31.2304,121.4737],"重庆市":[29.5630,106.5516],
+"石家庄市":[38.0428,114.5149],"唐山市":[39.6309,118.18],"秦皇岛市":[39.9367,119.6],"邯郸市":[36.6257,114.5391],"邢台市":[37.0703,114.504],"保定市":[38.8738,115.4646],"张家口市":[40.7677,114.8881],"承德市":[40.9518,117.9632],"沧州市":[38.3037,116.8388],"廊坊市":[39.5217,116.6839],"衡水市":[37.7389,115.6563],
+"太原市":[37.8706,112.5489],"大同市":[40.0768,113.2981],"阳泉市":[37.8718,113.577],"长治市":[36.1966,113.1174],"晋城市":[35.4907,112.852],"朔州市":[39.3328,112.4221],"晋中市":[37.6878,112.7513],"运城市":[35.0267,111.007],"忻州市":[38.4176,112.7341],"临汾市":[36.0876,111.5194],"吕梁市":[37.5187,111.1365],
+"呼和浩特市":[40.8424,111.7498],"包头市":[40.6581,109.84],"乌海市":[39.6531,106.7939],"赤峰市":[42.2607,118.8887],"通辽市":[43.6533,122.2436],"鄂尔多斯市":[39.6082,109.7817],"呼伦贝尔市":[49.2128,119.747],"巴彦淖尔市":[40.7436,107.3951],"乌兰察布市":[40.9933,113.1286],
+"沈阳市":[41.8057,123.4315],"大连市":[38.914,121.6147],"鞍山市":[41.1087,123.0089],"抚顺市":[41.8836,123.9572],"本溪市":[41.293,123.7685],"丹东市":[40.1296,124.3924],"锦州市":[41.0958,121.1272],"营口市":[40.6671,122.2356],"阜新市":[42.0226,121.6631],"辽阳市":[41.2583,123.1802],"盘锦市":[41.1213,122.0707],"铁岭市":[42.2849,123.8506],"朝阳市":[41.5745,120.4513],"葫芦岛市":[40.7112,120.8376],
+"长春市":[43.8171,125.3235],"吉林市":[43.8384,126.5501],"四平市":[43.1669,124.3511],"辽源市":[42.8876,125.1429],"通化市":[41.7288,125.9401],"白山市":[41.9401,126.4194],"松原市":[45.1412,124.1218],"白城市":[45.6197,122.8372],
+"哈尔滨市":[45.8038,126.534],"齐齐哈尔市":[47.354,123.918],"鸡西市":[45.2951,130.9698],"鹤岗市":[47.3547,130.3019],"双鸭山市":[46.6386,131.1617],"大庆市":[46.5905,125.1046],"伊春市":[47.7257,128.84],"佳木斯市":[46.8,130.3164],"七台河市":[45.7586,131.0036],"牡丹江市":[44.5867,129.6131],"黑河市":[50.2457,127.5286],"绥化市":[46.6386,126.9685],
+"南京市":[32.0603,118.7969],"无锡市":[31.5747,120.3017],"徐州市":[34.2614,117.1848],"常州市":[31.8105,119.9741],"苏州市":[31.2989,120.5853],"南通市":[32.0586,120.8943],"连云港市":[34.5965,119.2216],"淮安市":[33.6104,119.0155],"盐城市":[33.3477,120.1632],"扬州市":[32.3945,119.4129],"镇江市":[32.187,119.4251],"泰州市":[32.4551,119.9224],"宿迁市":[33.9649,118.275],
+"杭州市":[30.2741,120.1551],"宁波市":[29.8683,121.544],"温州市":[28.0011,120.6976],"嘉兴市":[30.752,120.755],"湖州市":[30.8934,120.0866],"绍兴市":[30.0006,120.5802],"金华市":[29.0782,120.087],"衢州市":[28.9356,118.8609],"舟山市":[30.0191,122.1052],"台州市":[28.6562,121.4206],"丽水市":[28.4681,119.9198],
+"合肥市":[31.8206,117.2272],"芜湖市":[31.3524,118.3725],"蚌埠市":[32.9162,117.3898],"淮南市":[32.6257,116.9849],"马鞍山市":[31.693,118.5061],"淮北市":[33.9562,116.7986],"铜陵市":[30.9524,117.8092],"安庆市":[30.5429,117.063],"黄山市":[29.711,118.3414],"滁州市":[32.2594,118.317],"阜阳市":[32.8899,115.8151],"宿州市":[33.6462,116.9646],"六安市":[31.7347,116.5235],"亳州市":[33.8457,115.7793],"池州市":[30.6597,117.492],"宣城市":[30.9398,118.7561],
+"福州市":[26.041,119.3065],"厦门市":[24.4798,118.0894],"莆田市":[25.454,119.0079],"三明市":[26.263,117.6372],"泉州市":[24.8741,118.6757],"漳州市":[24.513,117.647],"南平市":[26.642,118.178],"龙岩市":[25.0752,117.0173],"宁德市":[26.666,119.548],
+"南昌市":[28.6829,115.8579],"景德镇市":[29.2689,117.1784],"萍乡市":[27.6217,113.8548],"九江市":[29.705,116.0017],"新余市":[27.8177,114.9168],"鹰潭市":[28.2603,117.0698],"赣州市":[25.831,114.9354],"吉安市":[27.0867,114.9936],"宜春市":[27.8158,114.4169],"抚州市":[27.9479,116.3582],"上饶市":[28.4549,117.9436],
+"济南市":[36.6512,117.0079],"青岛市":[36.0671,120.3826],"淄博市":[36.8135,118.0548],"枣庄市":[34.8117,117.32],"东营市":[37.4341,118.6749],"烟台市":[37.4638,121.448],"潍坊市":[36.7068,119.1622],"济宁市":[35.4153,116.5872],"泰安市":[36.1949,117.133],"威海市":[37.5131,122.1204],"日照市":[35.4164,119.527],"临沂市":[35.1057,118.3564],"德州市":[37.4362,116.359],"聊城市":[36.457,115.9854],"滨州市":[37.3827,117.972],"菏泽市":[35.233,115.4811],
+"郑州市":[34.7466,113.6253],"开封市":[34.7972,114.3074],"洛阳市":[34.6181,112.454],"平顶山市":[33.7557,113.1927],"安阳市":[36.097,114.3927],"鹤壁市":[35.7474,114.2963],"新乡市":[35.3024,113.9264],"焦作市":[35.2157,113.2424],"濮阳市":[35.7617,115.0292],"许昌市":[34.036,113.8527],"漯河市":[33.5814,114.0165],"三门峡市":[34.774,111.2004],"南阳市":[33.0031,112.5284],"商丘市":[34.4142,115.6563],"信阳市":[32.1472,114.093],"周口市":[33.6261,114.6969],"驻马店市":[33.0088,114.0258],
+"武汉市":[30.5928,114.3055],"黄石市":[30.2004,115.0386],"十堰市":[32.6297,110.7974],"宜昌市":[30.6919,111.2864],"襄阳市":[32.0429,112.1226],"鄂州市":[30.3911,114.8907],"荆门市":[31.0347,112.1987],"孝感市":[30.9244,113.9168],"荆州市":[30.3524,112.183],"黄冈市":[30.4534,114.8721],"咸宁市":[29.8392,114.3226],"随州市":[31.6929,113.387],
+"长沙市":[28.194,112.9738],"株洲市":[27.8277,113.134],"湘潭市":[27.83,112.944],"衡阳市":[26.893,112.5718],"邵阳市":[27.2381,111.468],"岳阳市":[29.3569,113.129],"常德市":[29.0317,111.698],"张家界市":[29.1286,110.4792],"益阳市":[28.5446,112.354],"郴州市":[25.7702,113.0157],"永州市":[26.4222,111.613],"怀化市":[27.5508,109.9987],"娄底市":[27.7288,112.0024],
+"广州市":[23.1291,113.2644],"韶关市":[24.8101,113.5976],"深圳市":[22.5431,114.0579],"珠海市":[22.271,113.5767],"汕头市":[23.3541,116.6826],"佛山市":[23.0215,113.1215],"江门市":[22.5956,113.0819],"湛江市":[21.2708,110.3594],"茂名市":[21.6631,110.9254],"肇庆市":[23.0472,112.468],"惠州市":[23.1116,114.4161],"梅州市":[24.2886,116.1226],"汕尾市":[22.7861,115.3558],"河源市":[23.7463,114.7004],"阳江市":[21.8558,111.9832],"清远市":[23.6819,113.0562],"东莞市":[23.0207,113.7518],"中山市":[22.5169,113.3926],"潮州市":[23.6569,116.6226],"揭阳市":[23.5504,116.3726],"云浮市":[22.9158,112.0444],
+"南宁市":[22.817,108.3665],"柳州市":[24.3264,109.4287],"桂林市":[25.2735,110.2909],"梧州市":[23.477,111.2791],"北海市":[21.4815,109.1205],"防城港市":[21.6875,108.3052],"钦州市":[21.9819,108.6557],"贵港市":[23.1126,109.598],"玉林市":[22.6378,110.1819],"百色市":[23.9002,106.6184],"贺州市":[24.4072,111.5699],"河池市":[24.6928,108.0952],"来宾市":[23.7344,109.2137],"崇左市":[22.3767,107.3647],
+"海口市":[20.044,110.1999],"三亚市":[18.2528,109.512],"三沙市":[16.8344,112.3328],"儋州市":[19.5198,109.581],
+"成都市":[30.5728,104.0668],"自贡市":[29.3411,104.7794],"攀枝花市":[26.5823,101.7185],"泸州市":[28.8722,105.4422],"德阳市":[31.127,104.3982],"绵阳市":[31.4669,104.6796],"广元市":[32.4348,105.8426],"遂宁市":[30.5314,105.5632],"内江市":[29.597,105.0627],"乐山市":[29.5521,103.7662],"南充市":[31.0534,106.1108],"眉山市":[30.0514,103.8451],"宜宾市":[28.7517,104.6428],"广安市":[30.4584,106.63],"达州市":[31.209,107.4681],"雅安市":[30.0121,103.0624],"巴中市":[31.8672,106.749],"资阳市":[30.1267,104.6298],
+"贵阳市":[26.647,106.6302],"六盘水市":[26.5909,104.8299],"遵义市":[27.7255,106.9272],"安顺市":[26.2496,105.929],"毕节市":[27.2976,105.2826],"铜仁市":[27.7253,109.1876],
+"昆明市":[24.8801,102.8329],"曲靖市":[25.4893,103.7962],"玉溪市":[24.3524,102.5457],"保山市":[25.1078,99.1651],"昭通市":[27.3189,103.717],"丽江市":[26.8721,100.2299],"普洱市":[22.7871,100.9746],"临沧市":[23.8849,100.0953],
+"拉萨市":[29.6497,91.1409],"日喀则市":[29.2674,88.882],"昌都市":[31.1374,97.1726],"林芝市":[29.6496,94.3624],"山南市":[29.2375,91.7736],"那曲市":[31.4774,92.0507],
+"西安市":[34.3416,108.9398],"铜川市":[34.9033,108.9389],"宝鸡市":[34.3634,107.2378],"咸阳市":[34.33,108.7092],"渭南市":[34.5009,109.5097],"延安市":[36.5989,109.4909],"汉中市":[33.0684,107.0235],"榆林市":[38.2858,109.7346],"安康市":[32.6857,109.0296],"商洛市":[33.8705,109.9378],
+"兰州市":[36.0611,103.8343],"嘉峪关市":[39.7731,98.2869],"金昌市":[38.5197,102.1879],"白银市":[36.5432,104.1389],"天水市":[34.5806,105.7249],"武威市":[37.9278,102.6355],"张掖市":[38.9252,100.4469],"平凉市":[35.5424,106.6833],"酒泉市":[39.7328,98.4942],"庆阳市":[35.7079,107.6396],"定西市":[35.5816,104.6008],"陇南市":[33.4002,104.9212],
+"西宁市":[36.6171,101.7782],"海东市":[36.4828,102.6462],
+"银川市":[38.4872,106.2309],"石嘴山市":[39.022,106.3874],"吴忠市":[37.9977,106.201],"固原市":[36.0181,106.2426],"中卫市":[37.4983,105.1959],
+"乌鲁木齐市":[43.8256,87.6168],"克拉玛依市":[45.5797,84.8896],"吐鲁番市":[42.9517,89.1897],"哈密市":[42.8175,93.5078]
+  };
+// 区县数据：优先使用 head 里预加载的 __PCA（多 CDN 回退）
+    var pcaData = null;
+    var pcaLoadPromise = null;
+    function loadPCA(){
+      if(pcaData) return Promise.resolve(pcaData);
+      // 直接检查 __PCA（head 里异步加载完成）
+      if(typeof window.__PCA !== 'undefined' && window.__PCA && window.__PCA.length){
+        pcaData = window.__PCA; return Promise.resolve(pcaData);
+      }
+      if(pcaLoadPromise) return pcaLoadPromise;
+      pcaLoadPromise = new Promise(function(resolve){
+        var tries = 0;
+        function poll(){
+          if(window.__PCA && window.__PCA.length){
+            pcaData = window.__PCA; resolve(pcaData); return;
+          }
+          tries++;
+          if(tries > 20 || (window.__PCADone && !window.__PCA)){
+            // CDN 全挂了，直接拉 raw github 兜底
+            fetch('https://raw.githubusercontent.com/modood/Administrative-divisions-of-China/master/dist/pca-code.json')
+              .then(function(r){ return r.json(); })
+              .then(function(d){ if(d && d.length){ pcaData = d; window.__PCA = d; } resolve(pcaData); })
+              .catch(function(){ resolve(null); });
+            return;
+          }
+          setTimeout(poll, 300);
+        }
+        poll();
+      });
+      return pcaLoadPromise;
+    }
+    // 直辖市/特殊省份处理：pca-code.json里"北京市"下只有一层"市辖区"→ 实际区在下一层
+   function getPcaDistricts(provinceName, cityName){
+     if(!pcaData) return [];
+     var prov = null;
+     for(var i=0;i<pcaData.length;i++){
+       if(pcaData[i].name === provinceName){ prov = pcaData[i]; break; }
+     }
+     if(!prov) return [];
+     var children = prov.children || [];
+     var cityNode = null;
+     for(var j=0;j<children.length;j++){
+       if(children[j].name === cityName){ cityNode = children[j]; break; }
+     }
+     // 直辖市："北京市"→children[0]="市辖区"→children=实际区
+     if(!cityNode && (provinceName === '北京市' || provinceName === '上海市' || provinceName === '天津市' || provinceName === '重庆市')){
+       if(children.length) cityNode = children[0];
+     }
+     if(!cityNode) return [];
+     return cityNode.children || [];
+    }
+   var pickerPath = document.getElementById('wx-picker-path');
+  var pickerPanel = document.getElementById('wx-picker-panel');
+  var pickerList = document.getElementById('wx-picker-list');
+  var pickerDisplay = document.getElementById('wx-picker-display');
+  var tabs = document.querySelectorAll('#wx-picker-tabs .wx-tab');
+
+  var sel = { province: null, city: null, district: null };
+  var currentCityCoords = null;
+
+  function normName(n){ return (n||'').replace(/市$/,''); }
+
+  function renderList(){
+    pickerList.innerHTML = '';
+    var html = '';
+    var items = [];
+    var step = null;
+    tabs.forEach(function(t){ if(t.classList.contains('active')) step = t.getAttribute('data-step'); });
+
+    if(step === 'province'){
+      PROVINCES.forEach(function(p){ items.push({name:p[0]}); });
+    } else if(step === 'city'){
+      for(var i=0;i<PROVINCES.length;i++){
+        if(PROVINCES[i][0] === sel.province){
+          PROVINCES[i][1].forEach(function(c){ items.push({name:c}); });
+          break;
+        }
+      }
+    } else if(step === 'district'){
+      renderDistricts();
+      return;
+    }
+
+    items.forEach(function(it){
+      html += '<div class="wx-pk-item" data-name="'+it.name+'" style="padding:11px 14px;border-bottom:1px dashed rgba(255,180,200,.2);font-size:13px;color:#8b6b6b;cursor:pointer">'+it.name+'</div>';
+    });
+    if(!html){ html = '<div style="padding:14px;font-size:12px;color:#a8788a;text-align:center">请先选上级</div>'; }
+    pickerList.innerHTML = html;
+    pickerList.querySelectorAll('.wx-pk-item').forEach(function(el){
+      el.addEventListener('click', function(){
+        var name = el.getAttribute('data-name');
+        if(step === 'province'){
+          sel.province = name; sel.city = null; sel.district = null;
+          activateTab('city');
+        } else if(step === 'city'){
+          sel.city = name; sel.district = null;
+          currentCityCoords = CITY_COORDS[name] || null;
+          activateTab('district');
+        }
+      });
+    });
+  }
+
+  function renderDistricts(){
+    pickerList.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:#c9607a;letter-spacing:2px">· 正在加载区县 ·</div>';
+    // 优先用本地 pca_full.json（完整覆盖全国2800+区县）
+    loadPCA().then(function(data){
+      if(!data || !data.length){
+        pickerList.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:#a8788a">区县数据加载失败<br><span style="color:#c9b3b3;font-size:10px;letter-spacing:1px">请检查网络后重试</span></div>';
+        return;
+      }
+      var districts = getPcaDistricts(sel.province, sel.city);
+      // 过滤：跳过"经济开发区/高新区/管理区"这类特殊区
+      var filtered = districts.filter(function(d){
+        var n = d.name || '';
+        if(!n) return false;
+        if(n.indexOf('经济技术开发区') !== -1) return false;
+        if(n.indexOf('经济开发区') !== -1) return false;
+        if(n.indexOf('高新技术产业开发区') !== -1) return false;
+        if(n.indexOf('高新区') !== -1) return false;
+        if(n.indexOf('管理区') !== -1) return false;
+        if(n.indexOf('风景名胜区') !== -1) return false;
+        if(n.indexOf('新城') !== -1) return false;
+        return true;
+      });
+      var list = filtered.map(function(d){
+        var coords = currentCityCoords || [0, 0];
+        return [d.name, coords[0], coords[1]];
+      });
+      if(list.length){
+        renderDistrictList(list, sel.city);
+        return;
+      }
+      // 本地没数据，回退到 Open-Meteo
+      fetchDistrictsFromApi();
+    });
+  }
+
+  function fetchDistrictsFromApi(){
+    pickerList.innerHTML = '<div style="padding:14px;font-size:12px;color:#a8788a;text-align:center">加载区县中...</div>';
+    var cityNoSuffix = normName(sel.city);
+    var provinceName = sel.province;
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(cityNoSuffix) + '&count=50&language=zh&format=json')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var results = (d && d.results) || [];
+        var seen = {};
+        var list = [];
+        results.forEach(function(it){
+          var admin1 = it.admin1 || '';
+          if(admin1 && admin1 !== provinceName) return;
+          var districtName = it.name || '';
+          if(!districtName) return;
+          if(normName(districtName) === cityNoSuffix || districtName === sel.city) return;
+          if(seen[districtName]) return;
+          seen[districtName] = true;
+          list.push([districtName, it.latitude, it.longitude]);
+        });
+        if(list.length){
+          renderDistrictList(list, sel.city);
+        } else if(currentCityCoords){
+          renderDistrictList([[cityNoSuffix, currentCityCoords[0], currentCityCoords[1]]], sel.city);
+        } else {
+          pickerList.innerHTML = '<div style="padding:14px;font-size:12px;color:#a8788a;text-align:center">没有区县数据</div>';
+        }
+      })
+      .catch(function(){
+        if(currentCityCoords){
+          renderDistrictList([[cityNoSuffix, currentCityCoords[0], currentCityCoords[1]]], sel.city);
+        } else {
+          pickerList.innerHTML = '<div style="padding:14px;font-size:12px;color:#a8788a;text-align:center">加载失败，重试一下</div>';
+        }
+      });
+  }
+
+  function renderDistrictList(list, cityName){
+    var h = '';
+    list.forEach(function(c){
+      h += '<div class="wx-pk-item" data-name="'+c[0]+'" data-lat="'+c[1]+'" data-lon="'+c[2]+'" style="padding:11px 14px;border-bottom:1px dashed rgba(255,180,200,.2);font-size:13px;color:#8b6b6b;cursor:pointer">'+c[0]+'</div>';
+    });
+    pickerList.innerHTML = h;
+    pickerList.querySelectorAll('.wx-pk-item').forEach(function(el){
+      el.addEventListener('click', function(){
+        sel.district = el.getAttribute('data-name');
+        var lat = parseFloat(el.getAttribute('data-lat'));
+        var lon = parseFloat(el.getAttribute('data-lon'));
+        pickerDisplay.textContent = sel.district + ' · ' + cityName;
+        pickerPanel.style.display = 'none';
+        fetchWeather(lat, lon, sel.district);
+      });
+    });
+  }
+
+  function activateTab(step){
+    tabs.forEach(function(t){
+      var active = (t.getAttribute('data-step') === step);
+      if(active){
+        t.classList.add('active');
+        t.style.color = '#c9607a';
+        t.style.borderBottom = '2px solid #c9607a';
+        t.style.fontWeight = '600';
+        t.style.opacity = '1';
+      } else {
+        t.classList.remove('active');
+        t.style.color = '#c9b3b3';
+        t.style.borderBottom = '2px solid transparent';
+        t.style.fontWeight = 'normal';
+        t.style.opacity = '.5';
+      }
+    });
+    renderList();
+  }
+
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      var step = t.getAttribute('data-step');
+      if(step === 'city' && !sel.province) return;
+      if(step === 'district' && !sel.city) return;
+      activateTab(step);
+    });
+  });
+
+  pickerPath.addEventListener('click', function(){
+    if(pickerPanel.style.display === 'block'){
+      pickerPanel.style.display = 'none';
+    } else {
+      pickerPanel.style.display = 'block';
+      activateTab('province');
+    }
+  });
+
+  // 默认显示广信区（用户位置）
+  sel.province = '江西省';
+  sel.city = '上饶市';
+  sel.district = '广信区';
+  pickerDisplay.textContent = '广信区 · 上饶市';
+
+  // 默认拉取广信区（用户当前位置）
+  fetchWeather(28.4575, 117.9141, '广信区');
+
+// 每 10 分钟自动刷新一次当前天气（像手机天气一样实时）
+  setInterval(function(){
+    fetchWeather(lastWx.lat || 28.4575, lastWx.lon || 117.9141, lastWx.name);
+  }, 10 * 60 * 1000);
+
+  // Hero 卡片点击跳转小气候
+  var heroWx = document.getElementById('hero-wx');
+  if(heroWx){
+    heroWx.style.cursor = 'pointer';
+    heroWx.addEventListener('click', function(){
+      if(typeof openApp === 'function') openApp('weather');
+      else if(typeof showPage === 'function') showPage('weather');
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
