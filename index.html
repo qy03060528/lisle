@@ -853,18 +853,18 @@ window.addEventListener('load', function(){
 (function initSnow(){
   var layer = document.getElementById('snowLayer');
   if(!layer) return;
-  var count = 60;
+  var count = 110;
   for(var i=0;i<count;i++){
     var s = document.createElement('span');
     s.className = 'snow';
-    var sz = (2.5 + Math.random()*4.5);
+    var sz = (3 + Math.random()*5.5);
     s.style.left = (Math.random()*100) + '%';
     s.style.width = sz + 'px';
     s.style.height = sz + 'px';
-    s.style.opacity = (0.75 + Math.random()*0.25).toFixed(2);
-    var dur = (8 + Math.random()*8);
+    s.style.opacity = (0.85 + Math.random()*0.15).toFixed(2);
+    var dur = (7 + Math.random()*9);
     s.style.animationDuration = dur + 's';
-    s.style.animationDelay = (Math.random()*-15) + 's';
+    s.style.animationDelay = (Math.random()*-20) + 's';
     layer.appendChild(s);
   }
 })();
